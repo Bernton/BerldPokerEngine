@@ -4,47 +4,14 @@ namespace BerldPokerEngine
 {
     internal class Program
     {
-        private static int? RankFromChar(char rankChar)
-        {
-            return rankChar switch
-            {
-                '2' => Rank.Deuce,
-                '3' => Rank.Tray,
-                '4' => Rank.Four,
-                '5' => Rank.Five,
-                '6' => Rank.Six,
-                '7' => Rank.Seven,
-                '8' => Rank.Eight,
-                '9' => Rank.Nine,
-                'T' => Rank.Ten,
-                'J' => Rank.Jack,
-                'Q' => Rank.Queen,
-                'K' => Rank.King,
-                'A' => Rank.Ace,
-                _ => null
-            };
-        }
-
-        private static int? SuitFromChar(char suitChar)
-        {
-            return suitChar switch
-            {
-                'c' => Suit.Clubs,
-                'd' => Suit.Diamonds,
-                'h' => Suit.Hearts,
-                's' => Suit.Spades,
-                _ => null
-            };
-        }
-
         private static void Main(string[] args)
         {
-            args = new[] { "XxXxXxXxXx JcTc AcKd" };
+            args = new[] { "XxXxXxXxXx KcKd Kh2c" };
 
             Evaluate(args);
         }
 
-        private static List<Card> inputToCards(string input)
+        private static List<Card> InputToCards(string input)
         {
             int cardAmount = input.Length / 2;
             List<Card> cards = new();
@@ -59,8 +26,8 @@ namespace BerldPokerEngine
                     continue;
                 }
 
-                int? rank = RankFromChar(rankChar);
-                int? suit = SuitFromChar(suitChar);
+                int? rank = Rank.FromChar(rankChar);
+                int? suit = Suit.FromChar(suitChar);
 
                 if (rank.HasValue && suit.HasValue)
                 {
@@ -100,7 +67,7 @@ namespace BerldPokerEngine
 
             string boardInput = input[..10];
 
-            List<Card> boardCards = inputToCards(boardInput);
+            List<Card> boardCards = InputToCards(boardInput);
 
             string holeCardInput = input[10..];
 
@@ -112,7 +79,7 @@ namespace BerldPokerEngine
             for (int i = 0; i < playerAmount; i++)
             {
                 string playerCardInput = holeCardInput.Substring(i * 5 + 1, 4);
-                List<Card> playerCards = inputToCards(playerCardInput);
+                List<Card> playerCards = InputToCards(playerCardInput);
 
                 playerCardInputs.Add(playerCardInput);
                 holeCards.Add(playerCards);

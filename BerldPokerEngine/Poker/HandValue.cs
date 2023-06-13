@@ -2,13 +2,13 @@
 {
     internal struct HandValue
     {
-        internal int hand;
-        internal int[] ranks;
+        internal int Hand { get; set; }
+        internal int[] Ranks { get; }
 
         public HandValue()
         {
-            hand = -1;
-            ranks = new[] { -1, -1, -1, -1, -1 };
+            Hand = default;
+            Ranks = new int[5];
         }
     }
 }
