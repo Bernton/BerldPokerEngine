@@ -80,25 +80,18 @@ namespace BerldPokerEngine.Poker
 
                                     if (comparison == 0)
                                     {
-                                        comparison = value.rank4 - winnerValue.rank4;
-
-                                        if (comparison == 0 && value.rank3 != -1)
+                                        for (int j = value.ranks.Length - 1; j >= 0; j--)
                                         {
-                                            comparison = value.rank3 - winnerValue.rank3;
-
-                                            if (comparison == 0 && value.rank2 != -1)
+                                            if (value.ranks[j] < 0)
                                             {
-                                                comparison = value.rank2 - winnerValue.rank2;
+                                                break;
+                                            }
 
-                                                if (comparison == 0 && value.rank1 != -1)
-                                                {
-                                                    comparison = value.rank1 - winnerValue.rank1;
+                                            comparison = value.ranks[j] - winnerValue.ranks[j];
 
-                                                    if (comparison == 0 && value.rank0 != -1)
-                                                    {
-                                                        comparison = value.rank0 - winnerValue.rank0;
-                                                    }
-                                                }
+                                            if (comparison != 0)
+                                            {
+                                                break;
                                             }
                                         }
                                     }
@@ -173,15 +166,15 @@ namespace BerldPokerEngine.Poker
                         if (consecutiveFlushAmount == 5)
                         {
                             handValue.hand = i == Rank.Ten ? Hand.RoyalFlush : Hand.StraightFlush;
-                            handValue.rank4 = i + 4;
-                            handValue.rank3 = -1;
+                            handValue.ranks[4] = i + 4;
+                            handValue.ranks[3] = -1;
                             return;
                         }
                         else if (consecutiveFlushAmount == 4 && i == Rank.Deuce && coveredFlushRanks[Rank.Ace])
                         {
                             handValue.hand = Hand.StraightFlush;
-                            handValue.rank4 = Rank.Five;
-                            handValue.rank3 = -1;
+                            handValue.ranks[4] = Rank.Five;
+                            handValue.ranks[3] = -1;
                             return;
                         }
                     }
@@ -209,9 +202,9 @@ namespace BerldPokerEngine.Poker
                         if (rankAmounts[j] > 0 && j != i)
                         {
                             handValue.hand = Hand.FourOfAKind;
-                            handValue.rank4 = i;
-                            handValue.rank3 = j;
-                            handValue.rank2 = -1;
+                            handValue.ranks[4] = i;
+                            handValue.ranks[3] = j;
+                            handValue.ranks[2] = -1;
                             return;
                         }
                     }
@@ -237,9 +230,9 @@ namespace BerldPokerEngine.Poker
                     if (rankAmounts[i] >= 2 && i != (int)threeOfAKindRank)
                     {
                         handValue.hand = Hand.FullHouse;
-                        handValue.rank4 = threeOfAKindRank.Value;
-                        handValue.rank3 = i;
-                        handValue.rank2 = -1;
+                        handValue.ranks[4] = threeOfAKindRank.Value;
+                        handValue.ranks[3] = i;
+                        handValue.ranks[2] = -1;
                         return;
                     }
                 }
@@ -267,27 +260,7 @@ namespace BerldPokerEngine.Poker
                 {
                     if (coveredFlushRanks[i])
                     {
-                        if (ranksIndex == 4)
-                        {
-                            handValue.rank4 = i;
-                        }
-                        else if (ranksIndex == 3)
-                        {
-                            handValue.rank3 = i;
-                        }
-                        else if (ranksIndex == 2)
-                        {
-                            handValue.rank2 = i;
-                        }
-                        else if (ranksIndex == 1)
-                        {
-                            handValue.rank1 = i;
-                        }
-                        else if (ranksIndex == 0)
-                        {
-                            handValue.rank0 = i;
-                        }
-
+                        handValue.ranks[ranksIndex] = i;
                         ranksIndex--;
 
                         if (ranksIndex < 0)
@@ -312,15 +285,15 @@ namespace BerldPokerEngine.Poker
                     if (consecutiveAmount == 5)
                     {
                         handValue.hand = Hand.Straight;
-                        handValue.rank4 = i + 4;
-                        handValue.rank3 = -1;
+                        handValue.ranks[4] = i + 4;
+                        handValue.ranks[3] = -1;
                         return;
                     }
                     else if (consecutiveAmount == 4 && i == Rank.Deuce && rankAmounts[Rank.Ace] > 0)
                     {
                         handValue.hand = Hand.Straight;
-                        handValue.rank4 = Rank.Five;
-                        handValue.rank3 = -1;
+                        handValue.ranks[4] = Rank.Five;
+                        handValue.ranks[3] = -1;
                         return;
                     }
                 }
@@ -334,8 +307,8 @@ namespace BerldPokerEngine.Poker
             if (threeOfAKindRank.HasValue)
             {
                 handValue.hand = Hand.ThreeOfAKind;
-                handValue.rank4 = threeOfAKindRank.Value;
-                handValue.rank1 = -1;
+                handValue.ranks[4] = threeOfAKindRank.Value;
+                handValue.ranks[1] = -1;
 
                 int ranksIndex = 3;
 
@@ -343,15 +316,7 @@ namespace BerldPokerEngine.Poker
                 {
                     if (rankAmounts[i] > 0 && i != (int)threeOfAKindRank)
                     {
-                        if (ranksIndex == 3)
-                        {
-                            handValue.rank3 = i;
-                        }
-                        else if (ranksIndex == 2)
-                        {
-                            handValue.rank2 = i;
-                        }
-
+                        handValue.ranks[ranksIndex] = i;
                         ranksIndex--;
 
                         if (ranksIndex < 2)
@@ -396,10 +361,10 @@ namespace BerldPokerEngine.Poker
                         if (rankAmounts[i] > 0 && i != highestPairRank.Value && i != secondPairRank.Value)
                         {
                             handValue.hand = Hand.TwoPair;
-                            handValue.rank4 = highestPairRank.Value;
-                            handValue.rank3 = secondPairRank.Value;
-                            handValue.rank2 = i;
-                            handValue.rank1 = -1;
+                            handValue.ranks[4] = highestPairRank.Value;
+                            handValue.ranks[3] = secondPairRank.Value;
+                            handValue.ranks[2] = i;
+                            handValue.ranks[1] = -1;
                             return;
                         }
                     }
@@ -410,8 +375,8 @@ namespace BerldPokerEngine.Poker
             if (highestPairRank.HasValue)
             {
                 handValue.hand = Hand.Pair;
-                handValue.rank4 = highestPairRank.Value;
-                handValue.rank0 = -1;
+                handValue.ranks[4] = highestPairRank.Value;
+                handValue.ranks[0] = -1;
 
                 int ranksIndex = 3;
 
@@ -419,19 +384,7 @@ namespace BerldPokerEngine.Poker
                 {
                     if (rankAmounts[i] > 0 && i != highestPairRank.Value)
                     {
-                        if (ranksIndex == 3)
-                        {
-                            handValue.rank3 = i;
-                        }
-                        else if (ranksIndex == 2)
-                        {
-                            handValue.rank2 = i;
-                        }
-                        else if (ranksIndex == 1)
-                        {
-                            handValue.rank1 = i;
-                        }
-
+                        handValue.ranks[ranksIndex] = i;
                         ranksIndex--;
 
                         if (ranksIndex < 1)
@@ -453,27 +406,7 @@ namespace BerldPokerEngine.Poker
                 {
                     if (rankAmounts[i] > 0)
                     {
-                        if (ranksIndex == 4)
-                        {
-                            handValue.rank4 = i;
-                        }
-                        else if (ranksIndex == 3)
-                        {
-                            handValue.rank3 = i;
-                        }
-                        else if (ranksIndex == 2)
-                        {
-                            handValue.rank2 = i;
-                        }
-                        else if (ranksIndex == 1)
-                        {
-                            handValue.rank1 = i;
-                        }
-                        else if (ranksIndex == 0)
-                        {
-                            handValue.rank0 = i;
-                        }
-
+                        handValue.ranks[ranksIndex] = i;
                         ranksIndex--;
 
                         if (ranksIndex < 0)
