@@ -1,49 +1,104 @@
-﻿using System;
-
-namespace BerldPokerEngine.Poker
+﻿namespace BerldPokerEngine.Poker
 {
     internal static class Engine
     {
-        private static List<double[]> GetEmptyEquities(int playerAmount)
+        internal static List<Player>? Evaluate(List<Card> boardCards, List<List<Card>> holeCards)
         {
-            List<double[]> equities = new();
+            List<Player> players = EngineHelpers.GetPlayersFromHoleCards(holeCards);
+            players = players.OrderByDescending(c => c.WildCardAmount).ToList();
 
-            for (int i = 0; i < playerAmount; i++)
+            int wildBoardCardAmount = 5 - boardCards.Count;
+            int wildPlayerCardAmount = players.Count * 2 - players.Sum(c => c.HoleCards.Count);
+
+            if (wildBoardCardAmount == 5)
             {
-                equities.Add(new double[10]);
+                if (wildPlayerCardAmount == 0)
+                {
+                    return Evaluate_5_0(ref players);
+                }
+
+                if (players.Count >= 2 &&
+                    players[0].WildCardAmount == 2 &&
+                    players[1].WildCardAmount == 0)
+                {
+                    return Evaluate_5_2(ref players);
+                }
             }
 
-            return equities;
+            return null;
         }
 
-        private static List<Card> GetAllCards()
+        private static List<Player>? Evaluate_5_2(ref List<Player> players)
         {
-            List<Card> cards = new();
-
-            for (int i = 0; i < 52; i++)
-            {
-                cards.Add(new Card(i));
-            }
-
-            return cards;
-        }
-
-        internal static List<double[]> Evaluate_5_0(List<List<Card>> holeCards)
-        {
-            int playerAmount = holeCards.Count;
-            List<double[]> equities = GetEmptyEquities(playerAmount);
-
-            List<Card> deadCards = holeCards.Aggregate((a, b) => Enumerable.Concat(a, b).ToList());
-            List<Card> aliveCards = GetAllCards().Except(deadCards).ToList();
-
-            HandValue[] handValues = new HandValue[playerAmount];
-
-            for (int i = 0; i < playerAmount; i++)
-            {
-                handValues[i] = new();
-            }
+            List<Card> aliveCards = EngineHelpers.GetAliveCards(players);
 
             Card[] cardsToEvaluate = new Card[7];
+            List<int> winners = new();
+
+            for (int playerCardI1 = 0; playerCardI1 < aliveCards.Count; playerCardI1++)
+            {
+                for (int playerCardI2 = playerCardI1 + 1; playerCardI2 < aliveCards.Count; playerCardI2++)
+                {
+                    for (int boardCardI1 = 0; boardCardI1 < aliveCards.Count; boardCardI1++)
+                    {
+                        if (boardCardI1 == playerCardI1 || boardCardI1 == playerCardI2) continue;
+                        for (int boardCardI2 = boardCardI1 + 1; boardCardI2 < aliveCards.Count; boardCardI2++)
+                        {
+                            if (boardCardI2 == playerCardI1 || boardCardI2 == playerCardI2) continue;
+                            for (int boardCardI3 = boardCardI2 + 1; boardCardI3 < aliveCards.Count; boardCardI3++)
+                            {
+                                if (boardCardI3 == playerCardI1 || boardCardI3 == playerCardI2) continue;
+                                for (int boardCardI4 = boardCardI3 + 1; boardCardI4 < aliveCards.Count; boardCardI4++)
+                                {
+                                    if (boardCardI4 == playerCardI1 || boardCardI4 == playerCardI2) continue;
+                                    for (int boardCardI5 = boardCardI4 + 1; boardCardI5 < aliveCards.Count; boardCardI5++)
+                                    {
+                                        if (boardCardI5 == playerCardI1 || boardCardI5 == playerCardI2) continue;
+
+                                        cardsToEvaluate[2] = aliveCards[boardCardI1];
+                                        cardsToEvaluate[3] = aliveCards[boardCardI2];
+                                        cardsToEvaluate[4] = aliveCards[boardCardI3];
+                                        cardsToEvaluate[5] = aliveCards[boardCardI4];
+                                        cardsToEvaluate[6] = aliveCards[boardCardI5];
+
+                                        for (int i = 0; i < players.Count; i++)
+                                        {
+                                            Player player = players[i];
+
+                                            if (i == 0)
+                                            {
+                                                cardsToEvaluate[0] = aliveCards[playerCardI1];
+                                                cardsToEvaluate[1] = aliveCards[playerCardI2];
+                                            }
+                                            else
+                                            {
+                                                cardsToEvaluate[0] = player.HoleCards[0];
+                                                cardsToEvaluate[1] = player.HoleCards[1];
+                                            }
+
+                                            EvaluateCards(cardsToEvaluate, ref player);
+                                        }
+
+                                        AddEquityToWinners(ref players, ref winners);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Console.WriteLine(playerCardI1);
+            }
+
+            return players;
+        }
+
+        internal static List<Player> Evaluate_5_0(ref List<Player> players)
+        {
+            List<Card> aliveCards = EngineHelpers.GetAliveCards(players);
+
+            Card[] cardsToEvaluate = new Card[7];
+            List<int> winners = new();
 
             for (int boardCardI1 = 0; boardCardI1 < aliveCards.Count; boardCardI1++)
             {
@@ -61,150 +116,167 @@ namespace BerldPokerEngine.Poker
                                 cardsToEvaluate[5] = aliveCards[boardCardI4];
                                 cardsToEvaluate[6] = aliveCards[boardCardI5];
 
-                                for (int i = 0; i < playerAmount; i++)
+                                for (int i = 0; i < players.Count; i++)
                                 {
-                                    cardsToEvaluate[0] = holeCards[i][0];
-                                    cardsToEvaluate[1] = holeCards[i][1];
+                                    Player player = players[i];
 
-                                    EvaluateCards(cardsToEvaluate, ref handValues[i]);
+                                    cardsToEvaluate[0] = player.HoleCards[0];
+                                    cardsToEvaluate[1] = player.HoleCards[1];
+
+                                    EvaluateCards(cardsToEvaluate, ref player);
                                 }
 
-                                List<int> winners = new() { 0 };
-
-                                for (int i = 1; i < playerAmount; i++)
-                                {
-                                    HandValue value = handValues[i];
-                                    HandValue winnerValue = handValues[winners[0]];
-
-                                    int comparison = value.Hand - winnerValue.Hand;
-
-                                    if (comparison == 0)
-                                    {
-                                        for (int j = value.Ranks.Length - 1; j >= 0; j--)
-                                        {
-                                            if (value.Ranks[j] < 0)
-                                            {
-                                                break;
-                                            }
-
-                                            comparison = value.Ranks[j] - winnerValue.Ranks[j];
-
-                                            if (comparison != 0)
-                                            {
-                                                break;
-                                            }
-                                        }
-                                    }
-
-                                    if (comparison > 0)
-                                    {
-                                        winners = new() { i };
-                                    }
-                                    else if (comparison == 0)
-                                    {
-                                        winners.Add(i);
-                                    }
-                                }
-
-                                double winnerEquity = 1.0 / winners.Count;
-
-                                for (int i = 0; i < winners.Count; i++)
-                                {
-                                    int winnerIndex = winners[i];
-                                    int handIndex = (int)handValues[winnerIndex].Hand;
-                                    equities[winnerIndex][handIndex] += winnerEquity;
-                                }
+                                AddEquityToWinners(ref players, ref winners);
                             }
                         }
                     }
                 }
             }
 
-            return equities;
+            return players;
         }
 
-        private static void EvaluateCards(Card[] cards, ref HandValue handValue)
+        private static void AddEquityToWinners(ref List<Player> players, ref List<int> winners)
         {
-            // Straight flush
-            int[] suitAmount = new int[4];
-            int? flushSuit = null;
+            winners.Clear();
+            winners.Add(0);
+
+            for (int i = 1; i < players.Count; i++)
+            {
+                HandValue value = players[i].Value;
+                HandValue winnerValue = players[winners[0]].Value;
+
+                int comparison = value.Hand - winnerValue.Hand;
+
+                if (comparison == 0)
+                {
+                    for (int ranksI = value.Ranks.Length - 1; ranksI >= 0; ranksI--)
+                    {
+                        if (value.Ranks[ranksI] < 0)
+                        {
+                            break;
+                        }
+
+                        comparison = value.Ranks[ranksI] - winnerValue.Ranks[ranksI];
+
+                        if (comparison != 0)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (comparison > 0)
+                {
+                    winners.Clear();
+                    winners.Add(i);
+                }
+                else if (comparison == 0)
+                {
+                    winners.Add(i);
+                }
+            }
+
+            double winnerEquity = 1.0 / winners.Count;
+
+            for (int i = 0; i < winners.Count; i++)
+            {
+                Player winner = players[winners[i]];
+                int handIndex = winner.Value.Hand;
+                winner.Equities[handIndex] += winnerEquity;
+            }
+        }
+
+        private static readonly bool[] _coveredFlushRanks = new bool[Rank.Amount];
+
+        private static void SetCoveredFlushRanks(Card[] cards, int flushSuit)
+        {
+            for (int i = 0; i < Rank.Amount; i++)
+            {
+                _coveredFlushRanks[i] = false;
+            }
 
             for (int i = 0; i < cards.Length; i++)
             {
                 Card card = cards[i];
-                int suitIndex = card.Suit;
-                suitAmount[suitIndex]++;
 
-                if (suitAmount[suitIndex] == 5)
+                if (card.Suit == flushSuit)
                 {
-                    flushSuit = card.Suit;
+                    _coveredFlushRanks[card.Rank] = true;
+                }
+            }
+        }
+
+        private static void EvaluateCards(Card[] cards, ref Player player)
+        {
+            // Straight flush
+            int[] suitAmounts = new int[Suit.Amount];
+            int? flushSuit = null;
+
+            for (int i = 0; i < cards.Length; i++)
+            {
+                int cardSuit = cards[i].Suit;
+                suitAmounts[cardSuit]++;
+
+                if (suitAmounts[cardSuit] == 5)
+                {
+                    flushSuit = cardSuit;
                 }
             }
 
             if (flushSuit.HasValue)
             {
-                bool[] coveredFlushRanks = new bool[13];
-
-                for (int i = 0; i < cards.Length; i++)
-                {
-                    Card card = cards[i];
-
-                    if (card.Suit == flushSuit.Value)
-                    {
-                        coveredFlushRanks[card.Rank] = true;
-                    }
-                }
+                SetCoveredFlushRanks(cards, flushSuit.Value);
 
                 int consecutiveFlushAmount = 0;
 
-                for (int i = 12; i >= 0; i--)
+                for (int i = Rank.Ace; i >= Rank.Deuce; i--)
                 {
-                    if (coveredFlushRanks[i])
-                    {
-                        consecutiveFlushAmount++;
-
-                        if (consecutiveFlushAmount == 5)
-                        {
-                            handValue.Hand = i == Rank.Ten ? Hand.RoyalFlush : Hand.StraightFlush;
-                            handValue.Ranks[4] = i + 4;
-                            handValue.Ranks[3] = -1;
-                            return;
-                        }
-                        else if (consecutiveFlushAmount == 4 && i == Rank.Deuce && coveredFlushRanks[Rank.Ace])
-                        {
-                            handValue.Hand = Hand.StraightFlush;
-                            handValue.Ranks[4] = Rank.Five;
-                            handValue.Ranks[3] = -1;
-                            return;
-                        }
-                    }
-                    else
+                    if (!_coveredFlushRanks[i])
                     {
                         consecutiveFlushAmount = 0;
+                        continue;
+                    }
+
+                    consecutiveFlushAmount++;
+
+                    if (consecutiveFlushAmount == 5)
+                    {
+                        player.Value.Hand = i == Rank.Ten ? Hand.RoyalFlush : Hand.StraightFlush;
+                        player.Value.Ranks[4] = i + 4;
+                        player.Value.Ranks[3] = -1;
+                        return;
+                    }
+                    else if (consecutiveFlushAmount == 4 && i == Rank.Deuce && _coveredFlushRanks[Rank.Ace])
+                    {
+                        player.Value.Hand = Hand.StraightFlush;
+                        player.Value.Ranks[4] = Rank.Five;
+                        player.Value.Ranks[3] = -1;
+                        return;
                     }
                 }
             }
 
-            int[] rankAmounts = new int[13];
+            int[] rankAmounts = new int[Rank.Amount];
 
             for (int i = 0; i < cards.Length; i++)
             {
-                rankAmounts[(int)cards[i].Rank]++;
+                rankAmounts[cards[i].Rank]++;
             }
 
             // Four of a kind
-            for (int i = 12; i >= 0; i--)
+            for (int i = Rank.Ace; i >= Rank.Deuce; i--)
             {
                 if (rankAmounts[i] == 4)
                 {
-                    for (int j = 12; j >= 0; j--)
+                    for (int j = Rank.Ace; j >= Rank.Deuce; j--)
                     {
                         if (rankAmounts[j] > 0 && j != i)
                         {
-                            handValue.Hand = Hand.FourOfAKind;
-                            handValue.Ranks[4] = i;
-                            handValue.Ranks[3] = j;
-                            handValue.Ranks[2] = -1;
+                            player.Value.Hand = Hand.FourOfAKind;
+                            player.Value.Ranks[4] = i;
+                            player.Value.Ranks[3] = j;
+                            player.Value.Ranks[2] = -1;
                             return;
                         }
                     }
@@ -214,7 +286,7 @@ namespace BerldPokerEngine.Poker
             // Full house
             int? threeOfAKindRank = null;
 
-            for (int i = 12; i >= 0; i--)
+            for (int i = Rank.Ace; i >= Rank.Deuce; i--)
             {
                 if (rankAmounts[i] == 3)
                 {
@@ -225,14 +297,14 @@ namespace BerldPokerEngine.Poker
 
             if (threeOfAKindRank.HasValue)
             {
-                for (int i = 12; i >= 0; i--)
+                for (int i = Rank.Ace; i >= Rank.Deuce; i--)
                 {
-                    if (rankAmounts[i] >= 2 && i != (int)threeOfAKindRank)
+                    if (rankAmounts[i] >= 2 && i != threeOfAKindRank.Value)
                     {
-                        handValue.Hand = Hand.FullHouse;
-                        handValue.Ranks[4] = threeOfAKindRank.Value;
-                        handValue.Ranks[3] = i;
-                        handValue.Ranks[2] = -1;
+                        player.Value.Hand = Hand.FullHouse;
+                        player.Value.Ranks[4] = threeOfAKindRank.Value;
+                        player.Value.Ranks[3] = i;
+                        player.Value.Ranks[2] = -1;
                         return;
                     }
                 }
@@ -241,26 +313,14 @@ namespace BerldPokerEngine.Poker
             // Flush
             if (flushSuit.HasValue)
             {
-                bool[] coveredFlushRanks = new bool[13];
-
-                for (int i = 0; i < cards.Length; i++)
-                {
-                    Card card = cards[i];
-
-                    if (card.Suit == flushSuit.Value)
-                    {
-                        coveredFlushRanks[card.Rank] = true;
-                    }
-                }
-
-                handValue.Hand = Hand.Flush;
+                player.Value.Hand = Hand.Flush;
                 int ranksIndex = 4;
 
-                for (int i = 12; i >= 0; i--)
+                for (int i = Rank.Ace; i >= Rank.Deuce; i--)
                 {
-                    if (coveredFlushRanks[i])
+                    if (_coveredFlushRanks[i])
                     {
-                        handValue.Ranks[ranksIndex] = i;
+                        player.Value.Ranks[ranksIndex] = i;
                         ranksIndex--;
 
                         if (ranksIndex < 0)
@@ -276,47 +336,46 @@ namespace BerldPokerEngine.Poker
             // Straight
             int consecutiveAmount = 0;
 
-            for (int i = 12; i >= 0; i--)
+            for (int i = Rank.Ace; i >= Rank.Deuce; i--)
             {
-                if (rankAmounts[i] > 0)
-                {
-                    consecutiveAmount++;
-
-                    if (consecutiveAmount == 5)
-                    {
-                        handValue.Hand = Hand.Straight;
-                        handValue.Ranks[4] = i + 4;
-                        handValue.Ranks[3] = -1;
-                        return;
-                    }
-                    else if (consecutiveAmount == 4 && i == Rank.Deuce && rankAmounts[Rank.Ace] > 0)
-                    {
-                        handValue.Hand = Hand.Straight;
-                        handValue.Ranks[4] = Rank.Five;
-                        handValue.Ranks[3] = -1;
-                        return;
-                    }
-                }
-                else
+                if (rankAmounts[i] == 0)
                 {
                     consecutiveAmount = 0;
+                    continue;
+                }
+
+                consecutiveAmount++;
+
+                if (consecutiveAmount == 5)
+                {
+                    player.Value.Hand = Hand.Straight;
+                    player.Value.Ranks[4] = i + 4;
+                    player.Value.Ranks[3] = -1;
+                    return;
+                }
+                else if (consecutiveAmount == 4 && i == Rank.Deuce && rankAmounts[Rank.Ace] > 0)
+                {
+                    player.Value.Hand = Hand.Straight;
+                    player.Value.Ranks[4] = Rank.Five;
+                    player.Value.Ranks[3] = -1;
+                    return;
                 }
             }
 
             // Three of a kind
             if (threeOfAKindRank.HasValue)
             {
-                handValue.Hand = Hand.ThreeOfAKind;
-                handValue.Ranks[4] = threeOfAKindRank.Value;
-                handValue.Ranks[1] = -1;
+                player.Value.Hand = Hand.ThreeOfAKind;
+                player.Value.Ranks[4] = threeOfAKindRank.Value;
+                player.Value.Ranks[1] = -1;
 
                 int ranksIndex = 3;
 
-                for (int i = 12; i >= 0; i--)
+                for (int i = Rank.Ace; i >= Rank.Deuce; i--)
                 {
-                    if (rankAmounts[i] > 0 && i != (int)threeOfAKindRank)
+                    if (rankAmounts[i] > 0 && i != threeOfAKindRank.Value)
                     {
-                        handValue.Ranks[ranksIndex] = i;
+                        player.Value.Ranks[ranksIndex] = i;
                         ranksIndex--;
 
                         if (ranksIndex < 2)
@@ -332,7 +391,7 @@ namespace BerldPokerEngine.Poker
             // Two pair
             int? highestPairRank = null;
 
-            for (int i = 12; i >= 0; i--)
+            for (int i = Rank.Ace; i >= Rank.Deuce; i--)
             {
                 if (rankAmounts[i] == 2)
                 {
@@ -345,7 +404,7 @@ namespace BerldPokerEngine.Poker
             {
                 int? secondPairRank = null;
 
-                for (int i = 12; i >= 0; i--)
+                for (int i = Rank.Ace; i >= Rank.Deuce; i--)
                 {
                     if (rankAmounts[i] == 2 && i != highestPairRank.Value)
                     {
@@ -356,15 +415,15 @@ namespace BerldPokerEngine.Poker
 
                 if (secondPairRank.HasValue)
                 {
-                    for (int i = 12; i >= 0; i--)
+                    for (int i = Rank.Ace; i >= Rank.Deuce; i--)
                     {
                         if (rankAmounts[i] > 0 && i != highestPairRank.Value && i != secondPairRank.Value)
                         {
-                            handValue.Hand = Hand.TwoPair;
-                            handValue.Ranks[4] = highestPairRank.Value;
-                            handValue.Ranks[3] = secondPairRank.Value;
-                            handValue.Ranks[2] = i;
-                            handValue.Ranks[1] = -1;
+                            player.Value.Hand = Hand.TwoPair;
+                            player.Value.Ranks[4] = highestPairRank.Value;
+                            player.Value.Ranks[3] = secondPairRank.Value;
+                            player.Value.Ranks[2] = i;
+                            player.Value.Ranks[1] = -1;
                             return;
                         }
                     }
@@ -374,17 +433,17 @@ namespace BerldPokerEngine.Poker
             // Pair
             if (highestPairRank.HasValue)
             {
-                handValue.Hand = Hand.Pair;
-                handValue.Ranks[4] = highestPairRank.Value;
-                handValue.Ranks[0] = -1;
+                player.Value.Hand = Hand.Pair;
+                player.Value.Ranks[4] = highestPairRank.Value;
+                player.Value.Ranks[0] = -1;
 
                 int ranksIndex = 3;
 
-                for (int i = 12; i >= 0; i--)
+                for (int i = Rank.Ace; i >= Rank.Deuce; i--)
                 {
                     if (rankAmounts[i] > 0 && i != highestPairRank.Value)
                     {
-                        handValue.Ranks[ranksIndex] = i;
+                        player.Value.Ranks[ranksIndex] = i;
                         ranksIndex--;
 
                         if (ranksIndex < 1)
@@ -396,23 +455,21 @@ namespace BerldPokerEngine.Poker
 
                 return;
             }
-            else
+
+            // High card
+            player.Value.Hand = Hand.HighCard;
+            int highCardRanksIndex = 4;
+
+            for (int i = Rank.Ace; i >= Rank.Deuce; i--)
             {
-                // High card
-                handValue.Hand = Hand.HighCard;
-                int ranksIndex = 4;
-
-                for (int i = 12; i >= 0; i--)
+                if (rankAmounts[i] > 0)
                 {
-                    if (rankAmounts[i] > 0)
-                    {
-                        handValue.Ranks[ranksIndex] = i;
-                        ranksIndex--;
+                    player.Value.Ranks[highCardRanksIndex] = i;
+                    highCardRanksIndex--;
 
-                        if (ranksIndex < 0)
-                        {
-                            break;
-                        }
+                    if (highCardRanksIndex < 0)
+                    {
+                        break;
                     }
                 }
             }

@@ -2,6 +2,8 @@
 {
     internal static class Rank
     {
+        internal const int Amount = 13;
+
         internal const int Deuce = 0;
         internal const int Tray = 1;
         internal const int Four = 2;

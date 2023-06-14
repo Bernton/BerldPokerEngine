@@ -1,6 +1,6 @@
 ﻿namespace BerldPokerEngine.Poker
 {
-    internal struct HandValue
+    internal class HandValue
     {
         internal int Hand { get; set; }
         internal int[] Ranks { get; }

@@ -13,8 +13,8 @@
 
         internal Card(int index)
         {
-            Rank = index / 4;
-            Suit = index % 4;
+            Rank = index / Poker.Suit.Amount;
+            Suit = index % Poker.Suit.Amount;
         }
 
         public override string ToString()

@@ -2,6 +2,8 @@
 {
     internal static class Hand
     {
+        internal const int Amount = 10;
+
         internal const int HighCard = 0;
         internal const int Pair = 1;
         internal const int TwoPair = 2;

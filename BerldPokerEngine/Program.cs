@@ -6,41 +6,12 @@ namespace BerldPokerEngine
     {
         private static void Main(string[] args)
         {
-            args = new[] { "XxXxXxXxXx KcKd Kh2c" };
-
-            Evaluate(args);
-        }
-
-        private static List<Card> InputToCards(string input)
-        {
-            int cardAmount = input.Length / 2;
-            List<Card> cards = new();
-
-            for (int i = 0; i < cardAmount; i++)
+            if (args.Length == 0)
             {
-                char rankChar = input[i * 2];
-                char suitChar = input[i * 2 + 1];
-
-                if (rankChar == 'X' && suitChar == 'x')
-                {
-                    continue;
-                }
-
-                int? rank = Rank.FromChar(rankChar);
-                int? suit = Suit.FromChar(suitChar);
-
-                if (rank.HasValue && suit.HasValue)
-                {
-                    cards.Add(new(rank.Value, suit.Value));
-                }
-                else
-                {
-                    Console.Error.WriteLine("Invalid card input.");
-                    Environment.Exit(1);
-                }
+                args = new[] { "XxXxXxXxXx 2c2d XxXx" };
             }
 
-            return cards;
+            Evaluate(args);
         }
 
         private static void Evaluate(string[] args)
@@ -85,59 +56,83 @@ namespace BerldPokerEngine
                 holeCards.Add(playerCards);
             }
 
-            int wildBoardCardAmount = 5 - boardCards.Count;
-            int wildPlayerCardAmount = 0;
-
-            foreach (List<Card> playerCards in holeCards)
-            {
-                wildPlayerCardAmount = 2 - playerCards.Count;
-            }
-
-            List<double[]> equities = new();
-
             DateTime startTime = DateTime.Now;
 
-            if (wildBoardCardAmount == 5 && wildPlayerCardAmount == 0)
-            {
-                equities = Engine.Evaluate_5_0(holeCards);
-            }
-            else
+            List<Player>? playerStats = Engine.Evaluate(boardCards, holeCards);
+
+            if (playerStats is null)
             {
                 Console.Error.WriteLine("Format not supported.");
                 Environment.Exit(1);
             }
 
+            playerStats = playerStats.OrderBy(c => c.Index).ToList();
+
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - startTime;
 
-            double totalEquity = equities.Sum(c => c.Sum());
+            double totalEquity = playerStats.Sum(c => c.Equities.Sum());
             double equityPerMillisecond = totalEquity / elapsed.TotalMilliseconds;
 
             Console.WriteLine($"Time: {elapsed.TotalMilliseconds:0.0} ms");
             Console.WriteLine($"Speed: {equityPerMillisecond:0} equity/ms");
-            Console.WriteLine($"Total:\t\t\t{totalEquity,10:0.0} {100.0,14:0.00000000}%");
+            Console.WriteLine($"Total:\t\t\t{totalEquity,15:0.0} {100.0,14:0.00000000}%");
             Console.WriteLine();
 
-            for (int i = 0; i < equities.Count; i++)
+            for (int i = 0; i < playerStats.Count; i++)
             {
-                double[] playerEquity = equities[i];
+                double[] playerEquity = playerStats[i].Equities;
                 double totalPlayerEquity = playerEquity.Sum();
                 double totalPlayerEquityPercent = totalPlayerEquity / totalEquity * 100;
 
                 Console.WriteLine($"Player {(i + 1)} - {playerCardInputs[i]}");
-                Console.WriteLine($"Equity:\t\t\t{totalPlayerEquity,10:0.0} {totalPlayerEquityPercent,14:0.00000000}%");
+                Console.WriteLine($"Equity:\t\t\t{totalPlayerEquity,15:0.0} {totalPlayerEquityPercent,14:0.00000000}%");
 
-                for (int j = 0; j < 10; j++)
+                for (int j = 0; j < Hand.Amount; j++)
                 {
                     int hand = j;
                     double handEquity = playerEquity[j];
                     double handEquityPercent = handEquity / totalEquity * 100;
+                    string caption = Hand.ToFormatString(hand);
+                    string padding = Hand.GetTabPadding(hand);
 
-                    Console.WriteLine($"{Hand.ToFormatString(hand)}:{Hand.GetTabPadding(hand)}{handEquity,10:0.0} {handEquityPercent,14:0.00000000}%");
+                    Console.WriteLine($"{caption}:{padding}{handEquity,15:0.0} {handEquityPercent,14:0.00000000}%");
                 }
 
                 Console.WriteLine();
             }
+        }
+
+        private static List<Card> InputToCards(string input)
+        {
+            int cardAmount = input.Length / 2;
+            List<Card> cards = new();
+
+            for (int i = 0; i < cardAmount; i++)
+            {
+                char rankChar = input[i * 2];
+                char suitChar = input[i * 2 + 1];
+
+                if (rankChar == 'X' && suitChar == 'x')
+                {
+                    continue;
+                }
+
+                int? rank = Rank.FromChar(rankChar);
+                int? suit = Suit.FromChar(suitChar);
+
+                if (rank.HasValue && suit.HasValue)
+                {
+                    cards.Add(new(rank.Value, suit.Value));
+                }
+                else
+                {
+                    Console.Error.WriteLine("Invalid card input.");
+                    Environment.Exit(1);
+                }
+            }
+
+            return cards;
         }
     }
 }
