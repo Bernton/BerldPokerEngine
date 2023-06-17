@@ -9,9 +9,9 @@
             return holeCards.Select((holeCards, index) => new Player(index, holeCards)).ToList();
         }
 
-        internal static List<Card> GetAliveCards(List<Player> players)
+        internal static List<Card> GetAliveCards(List<Player> players, List<Card> boardCards)
         {
-            List<Card> seed = new();
+            List<Card> seed = new(boardCards);
             List<Card> deadCards = players.Aggregate(seed, (a, b) => Enumerable.Concat(a, b.HoleCards).ToList());
             return GetAllCards().Except(deadCards).ToList();
         }

@@ -5,7 +5,7 @@
         internal int Hand { get; set; }
         internal int[] Ranks { get; }
 
-        public HandValue()
+        internal HandValue()
         {
             Hand = default;
             Ranks = new int[5];

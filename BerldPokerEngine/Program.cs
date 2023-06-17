@@ -1,4 +1,5 @@
 ﻿using BerldPokerEngine.Poker;
+using System.Xml;
 
 namespace BerldPokerEngine
 {
@@ -8,7 +9,7 @@ namespace BerldPokerEngine
         {
             if (args.Length == 0)
             {
-                args = new[] { "XxXxXxXxXx 2c2d XxXx" };
+                args = new[] { "2hThJdXxXx 2c2d XxXx" };
             }
 
             Evaluate(args);
@@ -37,10 +38,10 @@ namespace BerldPokerEngine
             }
 
             string boardInput = input[..10];
+            string holeCardInput = input[10..];
 
             List<Card> boardCards = InputToCards(boardInput);
-
-            string holeCardInput = input[10..];
+            List<Card> allCards = new(boardCards);
 
             List<string> playerCardInputs = new();
             List<List<Card>> holeCards = new();
@@ -54,6 +55,13 @@ namespace BerldPokerEngine
 
                 playerCardInputs.Add(playerCardInput);
                 holeCards.Add(playerCards);
+                allCards.AddRange(playerCards);
+            }
+
+            if (allCards.Distinct().Count() != allCards.Count)
+            {
+                Console.Error.WriteLine("Duplicate card input.");
+                Environment.Exit(1);
             }
 
             DateTime startTime = DateTime.Now;
@@ -66,41 +74,48 @@ namespace BerldPokerEngine
                 Environment.Exit(1);
             }
 
-            playerStats = playerStats.OrderBy(c => c.Index).ToList();
-
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - startTime;
+
+            playerStats = playerStats.OrderBy(c => c.Index).ToList();
 
             double totalEquity = playerStats.Sum(c => c.Equities.Sum());
             double equityPerMillisecond = totalEquity / elapsed.TotalMilliseconds;
 
             Console.WriteLine($"Time: {elapsed.TotalMilliseconds:0.0} ms");
             Console.WriteLine($"Speed: {equityPerMillisecond:0} equity/ms");
-            Console.WriteLine($"Total:\t\t\t{totalEquity,15:0.0} {100.0,14:0.00000000}%");
+            Console.WriteLine();
+            Console.WriteLine($"Board:     {boardInput}");
+            WriteEquityLine("Total", "\t\t\t", totalEquity, 100.0);
             Console.WriteLine();
 
             for (int i = 0; i < playerStats.Count; i++)
             {
-                double[] playerEquity = playerStats[i].Equities;
-                double totalPlayerEquity = playerEquity.Sum();
+                Player player = playerStats[i];
+                double totalPlayerEquity = player.Equities.Sum();
                 double totalPlayerEquityPercent = totalPlayerEquity / totalEquity * 100;
 
-                Console.WriteLine($"Player {(i + 1)} - {playerCardInputs[i]}");
-                Console.WriteLine($"Equity:\t\t\t{totalPlayerEquity,15:0.0} {totalPlayerEquityPercent,14:0.00000000}%");
+                Console.WriteLine($"Player {player.Index + 1} - {playerCardInputs[player.Index]}");
+                WriteEquityLine("Equity", "\t\t\t", totalPlayerEquity, totalPlayerEquityPercent);
 
                 for (int j = 0; j < Hand.Amount; j++)
                 {
                     int hand = j;
-                    double handEquity = playerEquity[j];
+                    double handEquity = player.Equities[j];
                     double handEquityPercent = handEquity / totalEquity * 100;
                     string caption = Hand.ToFormatString(hand);
                     string padding = Hand.GetTabPadding(hand);
 
-                    Console.WriteLine($"{caption}:{padding}{handEquity,15:0.0} {handEquityPercent,14:0.00000000}%");
+                    WriteEquityLine(caption, padding, handEquity, handEquityPercent);
                 }
 
                 Console.WriteLine();
             }
+        }
+
+        private static void WriteEquityLine(string caption, string padding, double equity, double equityPercent)
+        {
+            Console.WriteLine($"{caption}:{padding}{equity,15:0.0} {equityPercent,14:0.00000000}%");
         }
 
         private static List<Card> InputToCards(string input)
