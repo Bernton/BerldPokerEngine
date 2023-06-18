@@ -8,7 +8,7 @@ namespace BerldPokerEngine
         {
             if (args.Length == 0)
             {
-                args = new[] { "JhXxXxXxXx JcJd XxXx" };
+                args = new[] { "9c8cXxXxXx JcTc XxXx" };
             }
 
             Evaluate(args);
@@ -88,23 +88,20 @@ namespace BerldPokerEngine
             WriteEquityLine("Total", "\t\t\t", totalEquity, 100.0);
             Console.WriteLine();
 
-            for (int i = 0; i < playerStats.Count; i++)
+            foreach (Player player in playerStats)
             {
-                Player player = playerStats[i];
+                Console.WriteLine($"Player {player.Index + 1} - {playerCardInputs[player.Index]}");
+
                 double totalPlayerEquity = player.Equities.Sum();
                 double totalPlayerEquityPercent = totalPlayerEquity / totalEquity * 100;
-
-                Console.WriteLine($"Player {player.Index + 1} - {playerCardInputs[player.Index]}");
                 WriteEquityLine("Equity", "\t\t\t", totalPlayerEquity, totalPlayerEquityPercent);
 
-                for (int j = 0; j < Hand.Amount; j++)
+                for (int hand = 0; hand < Hand.Amount; hand++)
                 {
-                    int hand = j;
-                    double handEquity = player.Equities[j];
-                    double handEquityPercent = handEquity / totalEquity * 100;
                     string caption = Hand.ToFormatString(hand);
                     string padding = Hand.GetTabPadding(hand);
-
+                    double handEquity = player.Equities[hand];
+                    double handEquityPercent = handEquity / totalEquity * 100;
                     WriteEquityLine(caption, padding, handEquity, handEquityPercent);
                 }
 
