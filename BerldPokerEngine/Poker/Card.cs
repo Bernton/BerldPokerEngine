@@ -17,9 +17,6 @@
             Suit = index % Poker.Suit.Amount;
         }
 
-        public override string ToString()
-        {
-            return $"{Poker.Rank.ToChar(Rank)}{Poker.Suit.ToChar(Suit)}";
-        }
+        public override string ToString() => $"{Poker.Rank.ToChar(Rank)}{Poker.Suit.ToChar(Suit)}";
     }
 }

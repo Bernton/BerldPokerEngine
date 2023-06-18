@@ -6,8 +6,9 @@ namespace BerldPokerEngine.Poker
     {
         internal static List<Player> Evaluate(List<Card> boardCards, List<List<Card>> holeCards)
         {
-            List<Player> players = GetPlayersFromHoleCards(holeCards);
-            players = players.OrderBy(c => c.HoleCards.Count).ToList();
+            List<Player> players =
+                GetPlayersFromHoleCards(holeCards)
+                .OrderBy(c => c.HoleCards.Count).ToList();
 
             int wildBoardCardAmount = BoardCardAmount - boardCards.Count;
             int wildPlayerCardAmount = GetWildPlayerCardAmount(players);
@@ -19,7 +20,7 @@ namespace BerldPokerEngine.Poker
             Card[] cardsToEvaluate = new Card[CardsToEvaluateAmount];
 
             Action<int[]> evaluateAction = (int[] wildCardIndexes) =>
-                DoIteration(wildCardIndexes, boardCards, aliveCards, ref players, ref winners, ref cardsToEvaluate);
+                DoIteration(wildCardIndexes, boardCards, aliveCards, players, winners, cardsToEvaluate);
 
             int wildCardOffset = 0;
 
@@ -42,37 +43,20 @@ namespace BerldPokerEngine.Poker
             return players;
         }
 
-        private static Action<int[]> NestIterateCombinations(int wildCardAmount, int loopBound, int wildCardOffset, Action<int[]> iterationAction)
+        private static void DoIteration(int[] wildCardIndexes, List<Card> boardCards, List<Card> aliveCards,
+            List<Player> players, List<int> winners, Card[] cardsToEvaluate)
         {
-            return (int[] wildCardIndexes) =>
-                IterateCombinations(wildCardIndexes, wildCardOffset, wildCardAmount, loopBound, iterationAction);
-        }
-
-        private static void DoIteration(
-            int[] wildCardIndexes,
-            List<Card> boardCards,
-            List<Card> aliveCards,
-            ref List<Player> players,
-            ref List<int> winners,
-            ref Card[] cardsToEvaluate)
-        {
-            int cardsToEvaluateI = 0;
             int wildCardI = 0;
 
-            for (int boardCardI = 0; boardCardI < 5; boardCardI++)
+            for (int boardCardI = 0; boardCardI < BoardCardAmount; boardCardI++)
             {
-                Card boardCardToEvaluate;
+                bool isWildCard = boardCardI >= boardCards.Count;
 
-                if (boardCardI < boardCards.Count)
-                {
-                    boardCardToEvaluate = boardCards[boardCardI];
-                }
-                else
-                {
-                    boardCardToEvaluate = aliveCards[wildCardIndexes[wildCardI++]];
-                }
+                Card boardCardToEvaluate = isWildCard ?
+                    aliveCards[wildCardIndexes[wildCardI++]] :
+                    boardCards[boardCardI];
 
-                cardsToEvaluate[cardsToEvaluateI++] = boardCardToEvaluate;
+                cardsToEvaluate[boardCardI] = boardCardToEvaluate;
             }
 
             for (int i = 0; i < players.Count; i++)
@@ -81,27 +65,31 @@ namespace BerldPokerEngine.Poker
 
                 for (int playerCardI = 0; playerCardI < 2; playerCardI++)
                 {
-                    Card playerCardToEvaluate;
+                    bool isWildCard = playerCardI >= player.HoleCards.Count;
 
-                    if (playerCardI < player.HoleCards.Count)
-                    {
-                        playerCardToEvaluate = player.HoleCards[playerCardI];
-                    }
-                    else
-                    {
-                        playerCardToEvaluate = aliveCards[wildCardIndexes[wildCardI++]];
-                    }
+                    Card playerCardToEvaluate = isWildCard ?
+                        aliveCards[wildCardIndexes[wildCardI++]] :
+                        player.HoleCards[playerCardI];
 
-                    cardsToEvaluate[cardsToEvaluateI + playerCardI] = playerCardToEvaluate;
+                    cardsToEvaluate[BoardCardAmount + playerCardI] = playerCardToEvaluate;
                 }
 
-                EvaluateCards(cardsToEvaluate, ref player);
+                SetHandValue(cardsToEvaluate, player);
             }
 
-            AddEquityToWinners(ref players, ref winners);
+            SetWinners(players, winners);
+            AddEquityToWinners(players, winners);
         }
 
-        private static void IterateCombinations(int[] indexes, int startIndex, int loopAmount, int loopBound, Action<int[]> action)
+        private static Action<int[]> NestIterateCombinations(int wildCardAmount, int loopBound, int wildCardOffset,
+            Action<int[]> iterationAction)
+        {
+            return (int[] wildCardIndexes) =>
+                IterateCombinations(wildCardIndexes, wildCardOffset, wildCardAmount, loopBound, iterationAction);
+        }
+
+        private static void IterateCombinations(int[] indexes, int startIndex, int loopAmount, int loopBound,
+            Action<int[]> action)
         {
             int[] counters = new int[loopAmount];
 
@@ -172,7 +160,7 @@ namespace BerldPokerEngine.Poker
             }
         }
 
-        private static void AddEquityToWinners(ref List<Player> players, ref List<int> winners)
+        private static void SetWinners(List<Player> players, List<int> winners)
         {
             winners.Clear();
             winners.Add(0);
@@ -194,7 +182,10 @@ namespace BerldPokerEngine.Poker
                     winners.Add(i);
                 }
             }
+        }
 
+        private static void AddEquityToWinners(List<Player> players, List<int> winners)
+        {
             double winnerEquity = 1.0 / winners.Count;
 
             for (int i = 0; i < winners.Count; i++)
@@ -225,7 +216,7 @@ namespace BerldPokerEngine.Poker
             }
         }
 
-        private static void EvaluateCards(Card[] cards, ref Player player)
+        private static void SetHandValue(Card[] cards, Player player)
         {
             // Straight flush
             int[] suitAmounts = new int[Suit.Amount];
