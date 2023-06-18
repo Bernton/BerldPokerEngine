@@ -8,7 +8,7 @@ namespace BerldPokerEngine
         {
             if (args.Length == 0)
             {
-                args = new[] { "9c8cXxXxXx JcTc XxXx" };
+                args = new[] { "XxXxXxXxXx AcTc 3c3d" };
             }
 
             Evaluate(args);

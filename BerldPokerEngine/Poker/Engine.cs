@@ -182,32 +182,14 @@ namespace BerldPokerEngine.Poker
                 HandValue value = players[i].Value;
                 HandValue winnerValue = players[winners[0]].Value;
 
-                int comparison = value.Hand - winnerValue.Hand;
-
-                if (comparison == 0)
-                {
-                    for (int ranksI = value.Ranks.Length - 1; ranksI >= 0; ranksI--)
-                    {
-                        if (value.Ranks[ranksI] < 0)
-                        {
-                            break;
-                        }
-
-                        comparison = value.Ranks[ranksI] - winnerValue.Ranks[ranksI];
-
-                        if (comparison != 0)
-                        {
-                            break;
-                        }
-                    }
-                }
+                int comparison = value.CompareTo(winnerValue);
 
                 if (comparison > 0)
                 {
                     winners.Clear();
-                    winners.Add(i);
                 }
-                else if (comparison == 0)
+
+                if (comparison >= 0)
                 {
                     winners.Add(i);
                 }
