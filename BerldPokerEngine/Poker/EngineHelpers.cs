@@ -2,7 +2,15 @@
 {
     internal static class EngineHelpers
     {
+        internal const int CardsToEvaluateAmount = 7;
+        internal const int BoardCardAmount = 5;
+        private const int PlayerCardAmount = 2;
         private const int AllCardsAmount = 52;
+
+        internal static int GetWildPlayerCardAmount(List<Player> players)
+        {
+            return players.Count * PlayerCardAmount - players.Sum(c => c.HoleCards.Count);
+        }
 
         internal static List<Player> GetPlayersFromHoleCards(List<List<Card>> holeCards)
         {

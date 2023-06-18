@@ -1,492 +1,175 @@
-﻿namespace BerldPokerEngine.Poker
+﻿using static BerldPokerEngine.Poker.EngineHelpers;
+
+namespace BerldPokerEngine.Poker
 {
     internal static class Engine
     {
         internal static List<Player>? Evaluate(List<Card> boardCards, List<List<Card>> holeCards)
         {
-            List<Player> players = EngineHelpers.GetPlayersFromHoleCards(holeCards);
-            players = players.OrderByDescending(c => c.WildCardAmount).ToList();
+            List<Player> players = GetPlayersFromHoleCards(holeCards);
+            players = players.OrderBy(c => c.HoleCards.Count).ToList();
 
-            int wildBoardCardAmount = 5 - boardCards.Count;
-            int wildPlayerCardAmount = players.Count * 2 - players.Sum(c => c.HoleCards.Count);
+            int wildBoardCardAmount = BoardCardAmount - boardCards.Count;
+            int wildPlayerCardAmount = GetWildPlayerCardAmount(players);
+            int wildCardAmount = wildBoardCardAmount + wildPlayerCardAmount;
 
-            bool is_X_2 = players.Count >= 2 && players[0].WildCardAmount == 2 && players[1].WildCardAmount == 0;
+            List<Card> aliveCards = GetAliveCards(players, boardCards);
 
-            if (wildBoardCardAmount == 0)
+            List<int> winners = new();
+            Card[] cardsToEvaluate = new Card[CardsToEvaluateAmount];
+
+            Action<int[]> evaluateAction = (int[] wildCardIndexes) =>
+                DoIteration(wildCardIndexes, boardCards, aliveCards, ref players, ref winners, ref cardsToEvaluate);
+
+            int wildCardOffset = 0;
+
+            if (wildBoardCardAmount > 0)
             {
-                if (wildPlayerCardAmount == 0)
-                {
-                    return Evaluate_0_0(ref players, boardCards);
-                }
-                else if (is_X_2)
-                {
-                    return Evaluate_0_2(ref players, boardCards);
-                }
+                evaluateAction = NestIterateCombinations(wildBoardCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
+                wildCardOffset += wildBoardCardAmount;
             }
-            else if (wildBoardCardAmount == 1)
+
+            foreach (Player player in players)
             {
-                if (wildPlayerCardAmount == 0)
+                if (player.WildCardAmount > 0)
                 {
-                    return Evaluate_1_0(ref players, boardCards);
-                }
-                else if (is_X_2)
-                {
-                    return Evaluate_1_2(ref players, boardCards);
-                }
-            }
-            else if (wildBoardCardAmount == 2)
-            {
-                if (wildPlayerCardAmount == 0)
-                {
-                    return Evaluate_2_0(ref players, boardCards);
-                }
-                else if (is_X_2)
-                {
-                    return Evaluate_2_2(ref players, boardCards);
-                }
-            }
-            else if (wildBoardCardAmount == 3)
-            {
-                if (wildPlayerCardAmount == 0)
-                {
-                    return Evaluate_3_0(ref players, boardCards);
-                }
-            }
-            else if (wildBoardCardAmount == 4)
-            {
-                if (wildPlayerCardAmount == 0)
-                {
-                    return Evaluate_4_0(ref players, boardCards);
-                }
-            }
-            else if (wildBoardCardAmount == 5)
-            {
-                if (wildPlayerCardAmount == 0)
-                {
-                    return Evaluate_5_0(ref players, boardCards);
-                }
-                else if (is_X_2)
-                {
-                    return Evaluate_5_2(ref players, boardCards);
+                    evaluateAction = NestIterateCombinations(player.WildCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
+                    wildCardOffset += player.WildCardAmount;
                 }
             }
 
-            return null;
+            evaluateAction(new int[wildCardAmount]);
+            return players;
         }
 
-        internal static List<Player> Evaluate_0_0(ref List<Player> players, List<Card> boardCards)
+        private static Action<int[]> NestIterateCombinations(int wildCardAmount, int loopBound, int wildCardOffset, Action<int[]> iterationAction)
         {
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[7];
+            return (int[] wildCardIndexes) =>
+                IterateCombinations(wildCardIndexes, wildCardOffset, wildCardAmount, loopBound, iterationAction);
+        }
 
-            cardsToEvaluate[2] = boardCards[0];
-            cardsToEvaluate[3] = boardCards[1];
-            cardsToEvaluate[4] = boardCards[2];
-            cardsToEvaluate[5] = boardCards[3];
-            cardsToEvaluate[6] = boardCards[4];
+        private static void DoIteration(
+            int[] wildCardIndexes,
+            List<Card> boardCards,
+            List<Card> aliveCards,
+            ref List<Player> players,
+            ref List<int> winners,
+            ref Card[] cardsToEvaluate)
+        {
+            int cardsToEvaluateI = 0;
+            int wildCardI = 0;
+
+            for (int boardCardI = 0; boardCardI < 5; boardCardI++)
+            {
+                Card boardCardToEvaluate;
+
+                if (boardCardI < boardCards.Count)
+                {
+                    boardCardToEvaluate = boardCards[boardCardI];
+                }
+                else
+                {
+                    boardCardToEvaluate = aliveCards[wildCardIndexes[wildCardI++]];
+                }
+
+                cardsToEvaluate[cardsToEvaluateI++] = boardCardToEvaluate;
+            }
 
             for (int i = 0; i < players.Count; i++)
             {
                 Player player = players[i];
 
-                cardsToEvaluate[0] = player.HoleCards[0];
-                cardsToEvaluate[1] = player.HoleCards[1];
+                for (int playerCardI = 0; playerCardI < 2; playerCardI++)
+                {
+                    Card playerCardToEvaluate;
+
+                    if (playerCardI < player.HoleCards.Count)
+                    {
+                        playerCardToEvaluate = player.HoleCards[playerCardI];
+                    }
+                    else
+                    {
+                        playerCardToEvaluate = aliveCards[wildCardIndexes[wildCardI++]];
+                    }
+
+                    cardsToEvaluate[cardsToEvaluateI + playerCardI] = playerCardToEvaluate;
+                }
 
                 EvaluateCards(cardsToEvaluate, ref player);
             }
 
             AddEquityToWinners(ref players, ref winners);
-            return players;
         }
 
-        private static List<Player>? Evaluate_0_2(ref List<Player> players, List<Card> boardCards)
+        private static void IterateCombinations(int[] indexes, int startIndex, int loopAmount, int loopBound, Action<int[]> action)
         {
-            List<Card> aliveCards = EngineHelpers.GetAliveCards(players, boardCards);
+            int[] counters = new int[loopAmount];
 
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[7];
-
-            for (int playerCardI1 = 0; playerCardI1 < aliveCards.Count; playerCardI1++)
+            for (int u = 0; u < loopAmount; u++)
             {
-                for (int playerCardI2 = playerCardI1 + 1; playerCardI2 < aliveCards.Count; playerCardI2++)
+                counters[u] = u;
+            }
+
+            bool breakOuter = false;
+            int last = loopAmount - 1;
+
+            while (!breakOuter)
+            {
+                // Apply 'counters' to 'indexes' and check for duplicates
+                bool hasDuplicate = false;
+
+                for (int i = 0; i < loopAmount; i++)
                 {
-                    cardsToEvaluate[2] = boardCards[0];
-                    cardsToEvaluate[3] = boardCards[1];
-                    cardsToEvaluate[4] = boardCards[2];
-                    cardsToEvaluate[5] = boardCards[3];
-                    cardsToEvaluate[6] = boardCards[4];
-
-                    for (int i = 0; i < players.Count; i++)
+                    for (int upperI = indexes.Length - 1; upperI >= startIndex + loopAmount; upperI--)
                     {
-                        Player player = players[i];
-
-                        if (i == 0)
+                        if (counters[i] == indexes[upperI])
                         {
-                            cardsToEvaluate[0] = aliveCards[playerCardI1];
-                            cardsToEvaluate[1] = aliveCards[playerCardI2];
+                            hasDuplicate = true;
+                            break;
                         }
-                        else
-                        {
-                            cardsToEvaluate[0] = player.HoleCards[0];
-                            cardsToEvaluate[1] = player.HoleCards[1];
-                        }
-
-                        EvaluateCards(cardsToEvaluate, ref player);
                     }
 
-                    AddEquityToWinners(ref players, ref winners);
-                }
-            }
+                    if (hasDuplicate) break;
 
-            return players;
-        }
-
-        internal static List<Player> Evaluate_1_0(ref List<Player> players, List<Card> boardCards)
-        {
-            List<Card> aliveCards = EngineHelpers.GetAliveCards(players, boardCards);
-
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[7];
-
-            for (int boardCardI1 = 0; boardCardI1 < aliveCards.Count; boardCardI1++)
-            {
-                cardsToEvaluate[2] = aliveCards[boardCardI1];
-                cardsToEvaluate[3] = boardCards[0];
-                cardsToEvaluate[4] = boardCards[1];
-                cardsToEvaluate[5] = boardCards[2];
-                cardsToEvaluate[6] = boardCards[3];
-
-                for (int i = 0; i < players.Count; i++)
-                {
-                    Player player = players[i];
-
-                    cardsToEvaluate[0] = player.HoleCards[0];
-                    cardsToEvaluate[1] = player.HoleCards[1];
-
-                    EvaluateCards(cardsToEvaluate, ref player);
+                    indexes[i + startIndex] = counters[i];
                 }
 
-                AddEquityToWinners(ref players, ref winners);
-            }
-
-            return players;
-        }
-
-        private static List<Player>? Evaluate_1_2(ref List<Player> players, List<Card> boardCards)
-        {
-            List<Card> aliveCards = EngineHelpers.GetAliveCards(players, boardCards);
-
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[7];
-
-            for (int playerCardI1 = 0; playerCardI1 < aliveCards.Count; playerCardI1++)
-            {
-                for (int playerCardI2 = playerCardI1 + 1; playerCardI2 < aliveCards.Count; playerCardI2++)
+                if (!hasDuplicate)
                 {
-                    for (int boardCardI1 = 0; boardCardI1 < aliveCards.Count; boardCardI1++)
+                    action(indexes);
+                }
+
+                if (last < 0) break;
+
+                counters[last]++;
+
+                for (int i = 0; i < loopAmount; i++)
+                {
+                    int iLast = loopAmount - i - 1;
+                    int bound = loopBound - i;
+
+                    if (counters[iLast] < bound) break;
+
+                    if (i == last)
                     {
-                        if (boardCardI1 == playerCardI1 || boardCardI1 == playerCardI2) continue;
+                        breakOuter = true;
+                        break;
+                    }
 
-                        cardsToEvaluate[2] = aliveCards[boardCardI1];
-                        cardsToEvaluate[3] = boardCards[0];
-                        cardsToEvaluate[4] = boardCards[1];
-                        cardsToEvaluate[5] = boardCards[2];
-                        cardsToEvaluate[6] = boardCards[3];
+                    int iSecondLast = iLast - 1;
+                    counters[iSecondLast]++;
 
-                        for (int i = 0; i < players.Count; i++)
+                    if (counters[iSecondLast] < bound - 1)
+                    {
+                        for (int j = 0; j <= i; j++)
                         {
-                            Player player = players[i];
-
-                            if (i == 0)
-                            {
-                                cardsToEvaluate[0] = aliveCards[playerCardI1];
-                                cardsToEvaluate[1] = aliveCards[playerCardI2];
-                            }
-                            else
-                            {
-                                cardsToEvaluate[0] = player.HoleCards[0];
-                                cardsToEvaluate[1] = player.HoleCards[1];
-                            }
-
-                            EvaluateCards(cardsToEvaluate, ref player);
+                            counters[iSecondLast + 1 + j] = counters[iSecondLast + j] + 1;
                         }
 
-                        AddEquityToWinners(ref players, ref winners);
+                        break;
                     }
                 }
             }
-
-            return players;
-        }
-
-        internal static List<Player> Evaluate_2_0(ref List<Player> players, List<Card> boardCards)
-        {
-            List<Card> aliveCards = EngineHelpers.GetAliveCards(players, boardCards);
-
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[7];
-
-            for (int boardCardI1 = 0; boardCardI1 < aliveCards.Count; boardCardI1++)
-            {
-                for (int boardCardI2 = boardCardI1 + 1; boardCardI2 < aliveCards.Count; boardCardI2++)
-                {
-                    cardsToEvaluate[2] = aliveCards[boardCardI1];
-                    cardsToEvaluate[3] = aliveCards[boardCardI2];
-                    cardsToEvaluate[4] = boardCards[0];
-                    cardsToEvaluate[5] = boardCards[1];
-                    cardsToEvaluate[6] = boardCards[2];
-
-                    for (int i = 0; i < players.Count; i++)
-                    {
-                        Player player = players[i];
-
-                        cardsToEvaluate[0] = player.HoleCards[0];
-                        cardsToEvaluate[1] = player.HoleCards[1];
-
-                        EvaluateCards(cardsToEvaluate, ref player);
-                    }
-
-                    AddEquityToWinners(ref players, ref winners);
-                }
-            }
-
-            return players;
-        }
-
-        private static List<Player>? Evaluate_2_2(ref List<Player> players, List<Card> boardCards)
-        {
-            List<Card> aliveCards = EngineHelpers.GetAliveCards(players, boardCards);
-
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[7];
-
-            for (int playerCardI1 = 0; playerCardI1 < aliveCards.Count; playerCardI1++)
-            {
-                for (int playerCardI2 = playerCardI1 + 1; playerCardI2 < aliveCards.Count; playerCardI2++)
-                {
-                    for (int boardCardI1 = 0; boardCardI1 < aliveCards.Count; boardCardI1++)
-                    {
-                        if (boardCardI1 == playerCardI1 || boardCardI1 == playerCardI2) continue;
-                        for (int boardCardI2 = boardCardI1 + 1; boardCardI2 < aliveCards.Count; boardCardI2++)
-                        {
-                            if (boardCardI2 == playerCardI1 || boardCardI2 == playerCardI2) continue;
-
-                            cardsToEvaluate[2] = aliveCards[boardCardI1];
-                            cardsToEvaluate[3] = aliveCards[boardCardI2];
-                            cardsToEvaluate[4] = boardCards[0];
-                            cardsToEvaluate[5] = boardCards[1];
-                            cardsToEvaluate[6] = boardCards[2];
-
-                            for (int i = 0; i < players.Count; i++)
-                            {
-                                Player player = players[i];
-
-                                if (i == 0)
-                                {
-                                    cardsToEvaluate[0] = aliveCards[playerCardI1];
-                                    cardsToEvaluate[1] = aliveCards[playerCardI2];
-                                }
-                                else
-                                {
-                                    cardsToEvaluate[0] = player.HoleCards[0];
-                                    cardsToEvaluate[1] = player.HoleCards[1];
-                                }
-
-                                EvaluateCards(cardsToEvaluate, ref player);
-                            }
-
-                            AddEquityToWinners(ref players, ref winners);
-                        }
-                    }
-                }
-            }
-
-            return players;
-        }
-
-        internal static List<Player> Evaluate_3_0(ref List<Player> players, List<Card> boardCards)
-        {
-            List<Card> aliveCards = EngineHelpers.GetAliveCards(players, boardCards);
-
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[7];
-
-            for (int boardCardI1 = 0; boardCardI1 < aliveCards.Count; boardCardI1++)
-            {
-                for (int boardCardI2 = boardCardI1 + 1; boardCardI2 < aliveCards.Count; boardCardI2++)
-                {
-                    for (int boardCardI3 = boardCardI2 + 1; boardCardI3 < aliveCards.Count; boardCardI3++)
-                    {
-                        cardsToEvaluate[2] = aliveCards[boardCardI1];
-                        cardsToEvaluate[3] = aliveCards[boardCardI2];
-                        cardsToEvaluate[4] = aliveCards[boardCardI3];
-                        cardsToEvaluate[5] = boardCards[0];
-                        cardsToEvaluate[6] = boardCards[1];
-
-                        for (int i = 0; i < players.Count; i++)
-                        {
-                            Player player = players[i];
-
-                            cardsToEvaluate[0] = player.HoleCards[0];
-                            cardsToEvaluate[1] = player.HoleCards[1];
-
-                            EvaluateCards(cardsToEvaluate, ref player);
-                        }
-
-                        AddEquityToWinners(ref players, ref winners);
-                    }
-                }
-            }
-
-            return players;
-        }
-
-        internal static List<Player> Evaluate_4_0(ref List<Player> players, List<Card> boardCards)
-        {
-            List<Card> aliveCards = EngineHelpers.GetAliveCards(players, boardCards);
-
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[7];
-
-            for (int boardCardI1 = 0; boardCardI1 < aliveCards.Count; boardCardI1++)
-            {
-                for (int boardCardI2 = boardCardI1 + 1; boardCardI2 < aliveCards.Count; boardCardI2++)
-                {
-                    for (int boardCardI3 = boardCardI2 + 1; boardCardI3 < aliveCards.Count; boardCardI3++)
-                    {
-                        for (int boardCardI4 = boardCardI3 + 1; boardCardI4 < aliveCards.Count; boardCardI4++)
-                        {
-                            cardsToEvaluate[2] = aliveCards[boardCardI1];
-                            cardsToEvaluate[3] = aliveCards[boardCardI2];
-                            cardsToEvaluate[4] = aliveCards[boardCardI3];
-                            cardsToEvaluate[5] = aliveCards[boardCardI4];
-                            cardsToEvaluate[6] = boardCards[0];
-
-                            for (int i = 0; i < players.Count; i++)
-                            {
-                                Player player = players[i];
-
-                                cardsToEvaluate[0] = player.HoleCards[0];
-                                cardsToEvaluate[1] = player.HoleCards[1];
-
-                                EvaluateCards(cardsToEvaluate, ref player);
-                            }
-
-                            AddEquityToWinners(ref players, ref winners);
-                        }
-                    }
-                }
-            }
-
-            return players;
-        }
-
-        internal static List<Player> Evaluate_5_0(ref List<Player> players, List<Card> boardCards)
-        {
-            List<Card> aliveCards = EngineHelpers.GetAliveCards(players, boardCards);
-
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[7];
-
-            for (int boardCardI1 = 0; boardCardI1 < aliveCards.Count; boardCardI1++)
-            {
-                for (int boardCardI2 = boardCardI1 + 1; boardCardI2 < aliveCards.Count; boardCardI2++)
-                {
-                    for (int boardCardI3 = boardCardI2 + 1; boardCardI3 < aliveCards.Count; boardCardI3++)
-                    {
-                        for (int boardCardI4 = boardCardI3 + 1; boardCardI4 < aliveCards.Count; boardCardI4++)
-                        {
-                            for (int boardCardI5 = boardCardI4 + 1; boardCardI5 < aliveCards.Count; boardCardI5++)
-                            {
-                                cardsToEvaluate[2] = aliveCards[boardCardI1];
-                                cardsToEvaluate[3] = aliveCards[boardCardI2];
-                                cardsToEvaluate[4] = aliveCards[boardCardI3];
-                                cardsToEvaluate[5] = aliveCards[boardCardI4];
-                                cardsToEvaluate[6] = aliveCards[boardCardI5];
-
-                                for (int i = 0; i < players.Count; i++)
-                                {
-                                    Player player = players[i];
-
-                                    cardsToEvaluate[0] = player.HoleCards[0];
-                                    cardsToEvaluate[1] = player.HoleCards[1];
-
-                                    EvaluateCards(cardsToEvaluate, ref player);
-                                }
-
-                                AddEquityToWinners(ref players, ref winners);
-                            }
-                        }
-                    }
-                }
-            }
-
-            return players;
-        }
-
-        private static List<Player>? Evaluate_5_2(ref List<Player> players, List<Card> boardCards)
-        {
-            List<Card> aliveCards = EngineHelpers.GetAliveCards(players, boardCards);
-
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[7];
-
-            for (int playerCardI1 = 0; playerCardI1 < aliveCards.Count; playerCardI1++)
-            {
-                for (int playerCardI2 = playerCardI1 + 1; playerCardI2 < aliveCards.Count; playerCardI2++)
-                {
-                    for (int boardCardI1 = 0; boardCardI1 < aliveCards.Count; boardCardI1++)
-                    {
-                        if (boardCardI1 == playerCardI1 || boardCardI1 == playerCardI2) continue;
-                        for (int boardCardI2 = boardCardI1 + 1; boardCardI2 < aliveCards.Count; boardCardI2++)
-                        {
-                            if (boardCardI2 == playerCardI1 || boardCardI2 == playerCardI2) continue;
-                            for (int boardCardI3 = boardCardI2 + 1; boardCardI3 < aliveCards.Count; boardCardI3++)
-                            {
-                                if (boardCardI3 == playerCardI1 || boardCardI3 == playerCardI2) continue;
-                                for (int boardCardI4 = boardCardI3 + 1; boardCardI4 < aliveCards.Count; boardCardI4++)
-                                {
-                                    if (boardCardI4 == playerCardI1 || boardCardI4 == playerCardI2) continue;
-                                    for (int boardCardI5 = boardCardI4 + 1; boardCardI5 < aliveCards.Count; boardCardI5++)
-                                    {
-                                        if (boardCardI5 == playerCardI1 || boardCardI5 == playerCardI2) continue;
-
-                                        cardsToEvaluate[2] = aliveCards[boardCardI1];
-                                        cardsToEvaluate[3] = aliveCards[boardCardI2];
-                                        cardsToEvaluate[4] = aliveCards[boardCardI3];
-                                        cardsToEvaluate[5] = aliveCards[boardCardI4];
-                                        cardsToEvaluate[6] = aliveCards[boardCardI5];
-
-                                        for (int i = 0; i < players.Count; i++)
-                                        {
-                                            Player player = players[i];
-
-                                            if (i == 0)
-                                            {
-                                                cardsToEvaluate[0] = aliveCards[playerCardI1];
-                                                cardsToEvaluate[1] = aliveCards[playerCardI2];
-                                            }
-                                            else
-                                            {
-                                                cardsToEvaluate[0] = player.HoleCards[0];
-                                                cardsToEvaluate[1] = player.HoleCards[1];
-                                            }
-
-                                            EvaluateCards(cardsToEvaluate, ref player);
-                                        }
-
-                                        AddEquityToWinners(ref players, ref winners);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Console.WriteLine($"Completed {playerCardI1} of 51");
-            }
-
-            return players;
         }
 
         private static void AddEquityToWinners(ref List<Player> players, ref List<int> winners)

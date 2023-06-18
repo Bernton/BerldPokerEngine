@@ -1,5 +1,4 @@
 ﻿using BerldPokerEngine.Poker;
-using System.Xml;
 
 namespace BerldPokerEngine
 {
@@ -9,7 +8,7 @@ namespace BerldPokerEngine
         {
             if (args.Length == 0)
             {
-                args = new[] { "2hThJdXxXx 2c2d XxXx" };
+                args = new[] { "JhXxXxXxXx JcJd XxXx" };
             }
 
             Evaluate(args);
