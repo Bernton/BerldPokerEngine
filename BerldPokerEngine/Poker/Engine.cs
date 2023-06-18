@@ -4,7 +4,7 @@ namespace BerldPokerEngine.Poker
 {
     internal static class Engine
     {
-        internal static List<Player>? Evaluate(List<Card> boardCards, List<List<Card>> holeCards)
+        internal static List<Player> Evaluate(List<Card> boardCards, List<List<Card>> holeCards)
         {
             List<Player> players = GetPlayersFromHoleCards(holeCards);
             players = players.OrderBy(c => c.HoleCards.Count).ToList();

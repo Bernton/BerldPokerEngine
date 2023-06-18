@@ -65,13 +65,7 @@ namespace BerldPokerEngine
 
             DateTime startTime = DateTime.Now;
 
-            List<Player>? playerStats = Engine.Evaluate(boardCards, holeCards);
-
-            if (playerStats is null)
-            {
-                Console.Error.WriteLine("Format not supported.");
-                Environment.Exit(1);
-            }
+            List<Player> playerStats = Engine.Evaluate(boardCards, holeCards);
 
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - startTime;
