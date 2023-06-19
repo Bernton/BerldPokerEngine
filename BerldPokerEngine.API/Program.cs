@@ -25,6 +25,7 @@ namespace BerldPokerEngine.API
                 app.UseSwaggerUI();
             }
 
+            app.UseFileServer();
             app.UseAuthorization();
 
             app.MapGet("/evaluate", (string input) =>
