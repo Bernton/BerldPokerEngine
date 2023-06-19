@@ -1,26 +1,36 @@
-﻿using static BerldPokerEngine.Poker.EngineHelpers;
+﻿using BerldPokerEngine.Poker;
+using static BerldPokerEngine.EngineHelpers;
 
-namespace BerldPokerEngine.Poker
+namespace BerldPokerEngine
 {
-    internal static class Engine
+    public static class Engine
     {
-        internal static List<Player> Evaluate(List<Card> boardCards, List<List<Card>> holeCards)
+        public static long CalculateIterationAmount(List<Card>? boardCards, List<List<Card>?> holeCards)
+            => EngineHelpers.CalculateIterationAmount(boardCards, holeCards);
+
+        public static List<Player> Evaluate(List<Card>? boardCards, List<List<Card>?> holeCards)
         {
+            List<Card> validBoardCards = EnsureValidBoardCards(boardCards);
+            List<List<Card>> validHoleCards = EnsureValidHoleCards(holeCards);
+
             List<Player> players =
-                GetPlayersFromHoleCards(holeCards)
+                GetPlayersFromHoleCards(validHoleCards)
                 .OrderBy(c => c.HoleCards.Count).ToList();
 
-            int wildBoardCardAmount = BoardCardAmount - boardCards.Count;
+            EnsureNoDuplicateCards(players, validBoardCards);
+            EnsureEnoughCardsAlive(players.Count);
+
+            int wildBoardCardAmount = BoardCardAmount - validBoardCards.Count;
             int wildPlayerCardAmount = GetWildPlayerCardAmount(players);
             int wildCardAmount = wildBoardCardAmount + wildPlayerCardAmount;
 
-            List<Card> aliveCards = GetAliveCards(players, boardCards);
+            List<Card> aliveCards = GetAliveCards(players, validBoardCards);
 
             List<int> winners = new();
             Card[] cardsToEvaluate = new Card[CardsToEvaluateAmount];
 
-            Action<int[]> evaluateAction = (int[] wildCardIndexes) =>
-                DoIteration(wildCardIndexes, boardCards, aliveCards, players, winners, cardsToEvaluate);
+            Action<int[]> evaluateAction = (wildCardIndexes) =>
+                DoIteration(wildCardIndexes, validBoardCards, aliveCards, players, winners, cardsToEvaluate);
 
             int wildCardOffset = 0;
 
@@ -40,7 +50,7 @@ namespace BerldPokerEngine.Poker
             }
 
             evaluateAction(new int[wildCardAmount]);
-            return players;
+            return players.OrderBy(c => c.Index).ToList();
         }
 
         private static void DoIteration(int[] wildCardIndexes, List<Card> boardCards, List<Card> aliveCards,
@@ -84,7 +94,7 @@ namespace BerldPokerEngine.Poker
         private static Action<int[]> NestIterateCombinations(int wildCardAmount, int loopBound, int wildCardOffset,
             Action<int[]> iterationAction)
         {
-            return (int[] wildCardIndexes) =>
+            return (wildCardIndexes) =>
                 IterateCombinations(wildCardIndexes, wildCardOffset, wildCardAmount, loopBound, iterationAction);
         }
 

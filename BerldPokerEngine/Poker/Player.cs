@@ -1,8 +1,12 @@
-﻿namespace BerldPokerEngine.Poker
+﻿using System.Collections.ObjectModel;
+
+namespace BerldPokerEngine.Poker
 {
-    internal class Player
+    public class Player
     {
-        internal int Index { get; }
+        public int Index { get; }
+        public ReadOnlyCollection<double> EquityAmounts => new(Equities);
+
         internal List<Card> HoleCards { get; }
         internal double[] Equities { get; }
         internal HandValue Value { get; }

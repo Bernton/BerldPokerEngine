@@ -1,22 +1,22 @@
 ﻿namespace BerldPokerEngine.Poker
 {
-    internal static class Rank
+    public static class Rank
     {
         internal const int Amount = 13;
 
-        internal const int Deuce = 0;
-        internal const int Tray = 1;
-        internal const int Four = 2;
-        internal const int Five = 3;
-        internal const int Six = 4;
-        internal const int Seven = 5;
-        internal const int Eight = 6;
-        internal const int Nine = 7;
-        internal const int Ten = 8;
-        internal const int Jack = 9;
-        internal const int Queen = 10;
-        internal const int King = 11;
-        internal const int Ace = 12;
+        public const int Deuce = 0;
+        public const int Tray = 1;
+        public const int Four = 2;
+        public const int Five = 3;
+        public const int Six = 4;
+        public const int Seven = 5;
+        public const int Eight = 6;
+        public const int Nine = 7;
+        public const int Ten = 8;
+        public const int Jack = 9;
+        public const int Queen = 10;
+        public const int King = 11;
+        public const int Ace = 12;
 
         internal static char ToChar(int rank)
         {
@@ -39,7 +39,7 @@
             };
         }
 
-        internal static int? FromChar(char rankChar)
+        public static int? FromChar(char rankChar)
         {
             return rankChar switch
             {
