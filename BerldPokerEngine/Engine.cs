@@ -1,4 +1,5 @@
 ﻿using BerldPokerEngine.Poker;
+using System.Linq;
 using static BerldPokerEngine.EngineHelpers;
 
 namespace BerldPokerEngine
@@ -88,7 +89,7 @@ namespace BerldPokerEngine
             }
 
             SetWinners(players, winners);
-            AddEquityToWinners(players, winners);
+            AddEquities(players, winners);
         }
 
         private static Action<int[]> NestIterateCombinations(int wildCardAmount, int loopBound, int wildCardOffset,
@@ -194,15 +195,44 @@ namespace BerldPokerEngine
             }
         }
 
-        private static void AddEquityToWinners(List<Player> players, List<int> winners)
+        private static void AddEquities(List<Player> players, List<int> winners)
         {
-            double winnerEquity = 1.0 / winners.Count;
-
-            for (int i = 0; i < winners.Count; i++)
+            // Win
+            if (winners.Count == 1)
             {
-                Player winner = players[winners[i]];
+                Player winner = players[winners[0]];
                 int handIndex = winner.Value.Hand;
-                winner.Equities[handIndex] += winnerEquity;
+                winner.Equities[handIndex] += 1.0;
+                winner.WinEquities[handIndex] += 1;
+            }
+            else
+            {
+                // Tie
+                double tieEquity = 1.0 / winners.Count;
+
+                for (int i = 0; i < winners.Count; i++)
+                {
+                    Player tied = players[winners[i]];
+                    int handIndex = tied.Value.Hand;
+                    tied.Equities[handIndex] += tieEquity;
+                    tied.TieEquities[handIndex] += tieEquity;
+                }
+            }
+
+            // Negative (Loss)
+            int winnersIndex = 0;
+
+            for (int i = 0; i < players.Count; i++)
+            {
+                if (winnersIndex < winners.Count && i == winners[winnersIndex])
+                {
+                    winnersIndex++;
+                    continue;
+                }
+
+                Player loser = players[i];
+                int handIndex = loser.Value.Hand;
+                loser.NegativeEquities[handIndex] += 1;
             }
         }
 

@@ -61,7 +61,7 @@ namespace ConsoleClient
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - startTime;
 
-            double totalEquity = playerStats.Sum(c => c.EquityAmounts.Sum());
+            double totalEquity = playerStats.Sum(c => c.TotalEquity);
             double equityPerMillisecond = totalEquity / elapsed.TotalMilliseconds;
 
             Console.WriteLine($"Time: {elapsed.TotalMilliseconds:0.0} ms");
@@ -75,9 +75,11 @@ namespace ConsoleClient
             {
                 Console.WriteLine($"Player {player.Index + 1} - {playerCardInputs[player.Index]}");
 
-                double totalPlayerEquity = player.EquityAmounts.Sum();
+                double totalPlayerEquity = player.TotalEquity;
                 double totalPlayerEquityPercent = totalPlayerEquity / totalEquity * 100;
                 WriteEquityLine("Equity", "\t\t\t", totalPlayerEquity, totalPlayerEquityPercent);
+
+                //Console.WriteLine("<Equity>");
 
                 for (int hand = 0; hand < Hand.Amount; hand++)
                 {
@@ -87,6 +89,39 @@ namespace ConsoleClient
                     double handEquityPercent = handEquity / totalEquity * 100;
                     WriteEquityLine(caption, padding, handEquity, handEquityPercent);
                 }
+
+                //Console.WriteLine("<Win equity>");
+
+                //for (int hand = 0; hand < Hand.Amount; hand++)
+                //{
+                //    string caption = Hand.ToFormatString(hand);
+                //    string padding = Hand.GetTabPadding(hand);
+                //    double handEquity = player.WinEquityAmounts[hand];
+                //    double handEquityPercent = handEquity / totalEquity * 100;
+                //    WriteEquityLine(caption, padding, handEquity, handEquityPercent);
+                //}
+
+                //Console.WriteLine("<Tie equity>");
+
+                //for (int hand = 0; hand < Hand.Amount; hand++)
+                //{
+                //    string caption = Hand.ToFormatString(hand);
+                //    string padding = Hand.GetTabPadding(hand);
+                //    double handEquity = player.TieEquityAmounts[hand];
+                //    double handEquityPercent = handEquity / totalEquity * 100;
+                //    WriteEquityLine(caption, padding, handEquity, handEquityPercent);
+                //}
+
+                //Console.WriteLine("<Negative equity>");
+
+                //for (int hand = 0; hand < Hand.Amount; hand++)
+                //{
+                //    string caption = Hand.ToFormatString(hand);
+                //    string padding = Hand.GetTabPadding(hand);
+                //    double handEquity = player.NegativeEquityAmounts[hand];
+                //    double handEquityPercent = handEquity / totalEquity * 100;
+                //    WriteEquityLine(caption, padding, handEquity, handEquityPercent);
+                //}
 
                 Console.WriteLine();
             }

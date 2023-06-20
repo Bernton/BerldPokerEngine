@@ -99,7 +99,9 @@ namespace BerldPokerEngine.API
             return new()
             {
                 Index = player.Index,
-                Equities = player.EquityAmounts.ToList()
+                WinEquities = player.WinEquityAmounts.ToList(),
+                TieEquities = player.TieEquityAmounts.ToList(),
+                NegativeEquities = player.NegativeEquityAmounts.ToList()
             };
         }
 

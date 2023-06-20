@@ -6,7 +6,7 @@
         {
             if (args.Length == 0)
             {
-                args = new[] { "XxXxXxXxXx KcKd Kh2c" };
+                args = new[] { "XxXxXxXxXx Jc5c XxXx" };
             }
 
             ConsoleHandler.Evaluate(args);

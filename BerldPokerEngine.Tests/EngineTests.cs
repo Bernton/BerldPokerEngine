@@ -84,9 +84,9 @@ namespace BerldPokerEngine.Tests
 
             List<Player> playerStats = Engine.Evaluate(null, holeCards);
 
-            Assert.Equal(1712304.0, playerStats.Sum(c => c.EquityAmounts.Sum()));
-            Assert.Equal(856031.0, playerStats[0].EquityAmounts.Sum());
-            Assert.Equal(856273.0, playerStats[1].EquityAmounts.Sum());
+            Assert.Equal(1712304.0, playerStats.Sum(c => c.TotalEquity));
+            Assert.Equal(856031.0, playerStats[0].TotalEquity);
+            Assert.Equal(856273.0, playerStats[1].TotalEquity);
         }
 
         [Fact]
@@ -100,9 +100,9 @@ namespace BerldPokerEngine.Tests
 
             List<Player> playerStats = Engine.Evaluate(null, holeCards);
 
-            Assert.Equal(1712304.0, playerStats.Sum(c => c.EquityAmounts.Sum()));
-            Assert.Equal(1625383.0, playerStats[0].EquityAmounts.Sum());
-            Assert.Equal(86921.0, playerStats[1].EquityAmounts.Sum());
+            Assert.Equal(1712304.0, playerStats.Sum(c => c.TotalEquity));
+            Assert.Equal(1625383.0, playerStats[0].TotalEquity);
+            Assert.Equal(86921.0, playerStats[1].TotalEquity);
         }
     }
 }
