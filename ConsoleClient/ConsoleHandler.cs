@@ -56,7 +56,7 @@ namespace ConsoleClient
                 Environment.Exit(1);
             }
 
-            long iterations = Engine.CalculateIterationAmount(boardCards, holeCards);
+            long iterations = ExhaustiveEngine.CalculateIterationAmount(boardCards, holeCards);
 
             if (iterations > MaxPermittedIterations)
             {
@@ -72,7 +72,7 @@ namespace ConsoleClient
 
             DateTime startTime = DateTime.Now;
 
-            List<Player> playerStats = Engine.Evaluate(boardCards, holeCards);
+            List<Player> playerStats = ExhaustiveEngine.Evaluate(boardCards, holeCards);
 
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - startTime;

@@ -1,67 +1,95 @@
 ﻿using BerldPokerEngine.Poker;
-using static BerldPokerEngine.EngineHelpers;
 
 namespace BerldPokerEngine
 {
-    public static class Engine
+    internal static class Engine
     {
-        public static long CalculateIterationAmount(List<Card>? boardCards, List<List<Card>?> holeCards)
-            => EngineHelpers.CalculateIterationAmount(boardCards, holeCards);
+        internal const int CardsToEvaluateAmount = 7;
 
-        public static List<Player> Evaluate(List<Card>? boardCards, List<List<Card>?> holeCards)
+        private const int AllCardsAmount = 52;
+        private const int BoardCardAmount = 5;
+        private const int PlayerCardAmount = 2;
+
+
+        internal static List<Card> EnsureValidBoardCards(List<Card>? boardCards)
         {
-            List<Card> validBoardCards = EnsureValidBoardCards(boardCards);
-            List<List<Card>> validHoleCards = EnsureValidHoleCards(holeCards);
-
-            List<Player> players =
-                GetPlayersFromHoleCards(validHoleCards)
-                .OrderBy(c => c.HoleCards.Count).ToList();
-
-            EnsureNoDuplicateCards(players, validBoardCards);
-            EnsureEnoughCardsAlive(players.Count);
-
-            int wildBoardCardAmount = BoardCardAmount - validBoardCards.Count;
-            int wildPlayerCardAmount = GetWildPlayerCardAmount(players);
-            int wildCardAmount = wildBoardCardAmount + wildPlayerCardAmount;
-
-            List<Card> aliveCards = GetAliveCards(players, validBoardCards);
-
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[CardsToEvaluateAmount];
-
-            Action<int[]> evaluateAction = (wildCardIndexes) =>
-                DoIteration(wildCardIndexes, validBoardCards, aliveCards, players, winners, cardsToEvaluate);
-
-            int wildCardOffset = 0;
-
-            // Special case with no opponents
-            if (players.Count == 1)
+            if (boardCards is null)
             {
-                evaluateAction = NestIterateCombinations(wildCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
+                boardCards ??= new();
             }
-            else
+            else if (boardCards.Count > BoardCardAmount)
             {
-                if (wildBoardCardAmount > 0)
-                {
-                    evaluateAction = NestIterateCombinations(wildBoardCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
-                    wildCardOffset += wildBoardCardAmount;
-                }
-
-                foreach (Player player in players)
-                {
-                    if (player.WildCardAmount > 0)
-                    {
-                        evaluateAction = NestIterateCombinations(player.WildCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
-                        wildCardOffset += player.WildCardAmount;
-                    }
-                }
+                throw new ArgumentException($"{nameof(boardCards)} must have {BoardCardAmount} or fewer cards.");
             }
 
-            evaluateAction(new int[wildCardAmount]);
-            return players.OrderBy(c => c.Index).ToList();
+            return boardCards;
         }
 
-        private static void DoIteration(int[] wildCardIndexes, List<Card> boardCards, List<Card> aliveCards,
+        internal static List<List<Card>> EnsureValidHoleCards(List<List<Card>?> holeCards)
+        {
+            List<List<Card>> validHoleCards = new();
+
+            if (holeCards.Count == 0)
+            {
+                throw new ArgumentException($"{nameof(holeCards)} must not be empty.");
+            }
+
+            foreach (List<Card>? playerCards in holeCards)
+            {
+                if (playerCards is not null && playerCards.Count > PlayerCardAmount)
+                {
+                    throw new ArgumentException($"{nameof(playerCards)} must have {PlayerCardAmount} or fewer cards.");
+                }
+
+                List<Card> validPlayerCards = playerCards ?? new();
+                validHoleCards.Add(validPlayerCards);
+            }
+
+            return validHoleCards;
+        }
+
+        internal static void EnsureNoDuplicateCards(List<Player> players, List<Card> boardCards)
+        {
+            List<Card> deadCards = GetDeadCards(players, boardCards);
+
+            if (deadCards.Distinct().Count() != deadCards.Count)
+            {
+                throw new ArgumentException("Duplicate cards must not exist.");
+            }
+        }
+
+        internal static void EnsureEnoughCardsAlive(int playerAmount)
+        {
+            int deadCardAmount = BoardCardAmount + playerAmount * PlayerCardAmount;
+
+            if (deadCardAmount > AllCardsAmount)
+            {
+                throw new ArgumentException("There must be enough alive cards.");
+            }
+        }
+
+        internal static int GetWildBoardCardAmount(int boardCards)
+        {
+            return BoardCardAmount - boardCards;
+        }
+
+        internal static int GetWildPlayerCardAmount(List<Player> players)
+        {
+            return players.Count * PlayerCardAmount - players.Sum(c => c.HoleCards.Count);
+        }
+
+        internal static List<Player> GetPlayersFromHoleCards(List<List<Card>> holeCards)
+        {
+            return holeCards.Select((holeCards, index) => new Player(index, holeCards)).ToList();
+        }
+
+        internal static List<Card> GetAliveCards(List<Player> players, List<Card> boardCards)
+        {
+            List<Card> deadCards = GetDeadCards(players, boardCards);
+            return GetAllCards().Except(deadCards).ToList();
+        }
+
+        internal static void DoIteration(int[] wildCardIndexes, List<Card> boardCards, List<Card> aliveCards,
             List<Player> players, List<int> winners, Card[] cardsToEvaluate)
         {
             int wildCardI = 0;
@@ -99,83 +127,23 @@ namespace BerldPokerEngine
             AddEquities(players, winners);
         }
 
-        private static Action<int[]> NestIterateCombinations(int wildCardAmount, int loopBound, int wildCardOffset,
-            Action<int[]> iterationAction)
+        private static List<Card> GetDeadCards(List<Player> players, List<Card> boardCards)
         {
-            return (wildCardIndexes) =>
-                IterateCombinations(wildCardIndexes, wildCardOffset, wildCardAmount, loopBound, iterationAction);
+            List<Card> seed = new(boardCards);
+            List<Card> deadCards = players.Aggregate(seed, (a, b) => a.Concat(b.HoleCards).ToList());
+            return deadCards;
         }
 
-        private static void IterateCombinations(int[] indexes, int startIndex, int loopAmount, int loopBound,
-            Action<int[]> action)
+        private static List<Card> GetAllCards()
         {
-            int[] counters = new int[loopAmount];
+            List<Card> cards = new();
 
-            for (int u = 0; u < loopAmount; u++)
+            for (int i = 0; i < AllCardsAmount; i++)
             {
-                counters[u] = u;
+                cards.Add(new Card(i));
             }
 
-            bool breakOuter = false;
-            int last = loopAmount - 1;
-
-            while (!breakOuter)
-            {
-                // Apply 'counters' to 'indexes' and check for duplicates
-                bool hasDuplicate = false;
-
-                for (int i = 0; i < loopAmount; i++)
-                {
-                    for (int upperI = indexes.Length - 1; upperI >= startIndex + loopAmount; upperI--)
-                    {
-                        if (counters[i] == indexes[upperI])
-                        {
-                            hasDuplicate = true;
-                            break;
-                        }
-                    }
-
-                    if (hasDuplicate) break;
-
-                    indexes[i + startIndex] = counters[i];
-                }
-
-                if (!hasDuplicate)
-                {
-                    action(indexes);
-                }
-
-                if (last < 0) break;
-
-                counters[last]++;
-
-                for (int i = 0; i < loopAmount; i++)
-                {
-                    int iLast = loopAmount - i - 1;
-                    int bound = loopBound - i;
-
-                    if (counters[iLast] < bound) break;
-
-                    if (i == last)
-                    {
-                        breakOuter = true;
-                        break;
-                    }
-
-                    int iSecondLast = iLast - 1;
-                    counters[iSecondLast]++;
-
-                    if (counters[iSecondLast] < bound - 1)
-                    {
-                        for (int j = 0; j <= i; j++)
-                        {
-                            counters[iSecondLast + 1 + j] = counters[iSecondLast + j] + 1;
-                        }
-
-                        break;
-                    }
-                }
-            }
+            return cards;
         }
 
         private static void SetWinners(List<Player> players, List<int> winners)
@@ -243,26 +211,6 @@ namespace BerldPokerEngine
             }
         }
 
-        private static readonly bool[] _coveredFlushRanks = new bool[Rank.Amount];
-
-        private static void SetCoveredFlushRanks(Card[] cards, int flushSuit)
-        {
-            for (int i = 0; i < Rank.Amount; i++)
-            {
-                _coveredFlushRanks[i] = false;
-            }
-
-            for (int i = 0; i < cards.Length; i++)
-            {
-                Card card = cards[i];
-
-                if (card.Suit == flushSuit)
-                {
-                    _coveredFlushRanks[card.Rank] = true;
-                }
-            }
-        }
-
         private static void SetHandValue(Card[] cards, Player player)
         {
             // Straight flush
@@ -280,15 +228,30 @@ namespace BerldPokerEngine
                 }
             }
 
+            bool[] coveredFlushRanks = new bool[Rank.Amount];
+
             if (flushSuit.HasValue)
             {
-                SetCoveredFlushRanks(cards, flushSuit.Value);
+                for (int i = 0; i < Rank.Amount; i++)
+                {
+                    coveredFlushRanks[i] = false;
+                }
+
+                for (int i = 0; i < cards.Length; i++)
+                {
+                    Card card = cards[i];
+
+                    if (card.Suit == flushSuit)
+                    {
+                        coveredFlushRanks[card.Rank] = true;
+                    }
+                }
 
                 int consecutiveFlushAmount = 0;
 
                 for (int i = Rank.Ace; i >= Rank.Deuce; i--)
                 {
-                    if (!_coveredFlushRanks[i])
+                    if (!coveredFlushRanks[i])
                     {
                         consecutiveFlushAmount = 0;
                         continue;
@@ -303,7 +266,7 @@ namespace BerldPokerEngine
                         player.Value.Ranks[3] = -1;
                         return;
                     }
-                    else if (consecutiveFlushAmount == 4 && i == Rank.Deuce && _coveredFlushRanks[Rank.Ace])
+                    else if (consecutiveFlushAmount == 4 && i == Rank.Deuce && coveredFlushRanks[Rank.Ace])
                     {
                         player.Value.Hand = Hand.StraightFlush;
                         player.Value.Ranks[4] = Rank.Five;
@@ -374,7 +337,7 @@ namespace BerldPokerEngine
 
                 for (int i = Rank.Ace; i >= Rank.Deuce; i--)
                 {
-                    if (_coveredFlushRanks[i])
+                    if (coveredFlushRanks[i])
                     {
                         player.Value.Ranks[ranksIndex] = i;
                         ranksIndex--;

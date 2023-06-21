@@ -3,7 +3,7 @@ using Xunit;
 
 namespace BerldPokerEngine.Tests
 {
-    public class EngineTests
+    public class ExhaustiveEngineTests
     {
         private static readonly List<List<Card>?> singleWildPlayer = new() { null };
 
@@ -23,7 +23,7 @@ namespace BerldPokerEngine.Tests
                 holeCards.Add(cards);
             }
 
-            Assert.Throws<ArgumentException>(() => Engine.Evaluate(null, holeCards));
+            Assert.Throws<ArgumentException>(() => ExhaustiveEngine.Evaluate(null, holeCards));
         }
 
         [Fact]
@@ -38,7 +38,7 @@ namespace BerldPokerEngine.Tests
                 Card.CardAs
             };
 
-            Assert.Throws<ArgumentException>(() => Engine.Evaluate(boardCards, singleWildPlayer));
+            Assert.Throws<ArgumentException>(() => ExhaustiveEngine.Evaluate(boardCards, singleWildPlayer));
         }
 
         [Fact]
@@ -52,7 +52,7 @@ namespace BerldPokerEngine.Tests
                 new() { Card.Card8s, Card.Card7s }
             };
 
-            Assert.Throws<ArgumentException>(() => Engine.Evaluate(null, holeCards));
+            Assert.Throws<ArgumentException>(() => ExhaustiveEngine.Evaluate(null, holeCards));
         }
 
         [Fact]
@@ -71,7 +71,7 @@ namespace BerldPokerEngine.Tests
                 new() { Card.CardJs }
             };
 
-            Assert.Throws<ArgumentException>(() => Engine.Evaluate(boardCards, holeCards));
+            Assert.Throws<ArgumentException>(() => ExhaustiveEngine.Evaluate(boardCards, holeCards));
         }
 
         [Fact]
@@ -83,7 +83,7 @@ namespace BerldPokerEngine.Tests
                 new() { Card.Card3c, Card.Card3d }
             };
 
-            List<Player> playerStats = Engine.Evaluate(null, holeCards);
+            List<Player> playerStats = ExhaustiveEngine.Evaluate(null, holeCards);
 
             Assert.Equal(1712304.0, playerStats.Sum(c => c.TotalEquity));
             Assert.Equal(856031.0, playerStats[0].TotalEquity);
@@ -99,7 +99,7 @@ namespace BerldPokerEngine.Tests
                 new() { Card.CardKh, Card.Card2c }
             };
 
-            List<Player> playerStats = Engine.Evaluate(null, holeCards);
+            List<Player> playerStats = ExhaustiveEngine.Evaluate(null, holeCards);
 
             Assert.Equal(1712304.0, playerStats.Sum(c => c.TotalEquity));
             Assert.Equal(1625383.0, playerStats[0].TotalEquity);

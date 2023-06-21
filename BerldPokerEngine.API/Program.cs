@@ -72,14 +72,14 @@ namespace BerldPokerEngine.API
                 if (allCards.Distinct().Count() != allCards.Count)
                     return Results.BadRequest("Duplicate card input.");
 
-                long iterationAmount = Engine.CalculateIterationAmount(boardCards, holeCards);
+                long iterationAmount = ExhaustiveEngine.CalculateIterationAmount(boardCards, holeCards);
 
                 if (iterationAmount > MaxPermittedIterations)
                     return Results.BadRequest("Requested input needs more iterations than permitted.");
 
                 DateTime startTime = DateTime.Now;
 
-                List<Player> playerStats = Engine.Evaluate(boardCards, holeCards);
+                List<Player> playerStats = ExhaustiveEngine.Evaluate(boardCards, holeCards);
 
                 DateTime endTime = DateTime.Now;
                 TimeSpan elapsed = endTime - startTime;
