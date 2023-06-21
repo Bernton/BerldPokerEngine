@@ -86,32 +86,37 @@ namespace BerldPokerEngine
         {
             List<Card> validBoardCards = EnsureValidBoardCards(boardCards);
             List<List<Card>> validHoleCards = EnsureValidHoleCards(holeCards);
+
             List<Player> players = GetPlayersFromHoleCards(validHoleCards);
             List<Card> aliveCards = GetAliveCards(players, validBoardCards);
 
-            // Special case with no dead cards and no opponents
-            if (aliveCards.Count == AllCardsAmount && players.Count == 1)
-            {
-                return GetBinCoeff(aliveCards.Count, BoardCardAmount + PlayerCardAmount);
-            }
+            int wildBoardCardAmount = BoardCardAmount - validBoardCards.Count;
+            int wildPlayerCardAmount = GetWildPlayerCardAmount(players);
+            int wildCardAmount = wildBoardCardAmount + wildPlayerCardAmount;
 
             int cardsLeftAmount = aliveCards.Count;
             long iterationAmount = 1;
 
-            int wildBoardCardAmount = BoardCardAmount - validBoardCards.Count;
-
-            if (wildBoardCardAmount > 0)
+            // Special case with no opponents
+            if (players.Count == 1)
             {
-                iterationAmount *= GetBinCoeff(cardsLeftAmount, wildBoardCardAmount);
-                cardsLeftAmount -= wildBoardCardAmount;
+                iterationAmount *= GetBinCoeff(aliveCards.Count, wildCardAmount);
             }
-
-            foreach (Player player in players)
+            else
             {
-                if (player.WildCardAmount > 0)
+                if (wildBoardCardAmount > 0)
                 {
-                    iterationAmount *= GetBinCoeff(cardsLeftAmount, player.WildCardAmount);
-                    cardsLeftAmount -= player.WildCardAmount;
+                    iterationAmount *= GetBinCoeff(cardsLeftAmount, wildBoardCardAmount);
+                    cardsLeftAmount -= wildBoardCardAmount;
+                }
+
+                foreach (Player player in players)
+                {
+                    if (player.WildCardAmount > 0)
+                    {
+                        iterationAmount *= GetBinCoeff(cardsLeftAmount, player.WildCardAmount);
+                        cardsLeftAmount -= player.WildCardAmount;
+                    }
                 }
             }
 

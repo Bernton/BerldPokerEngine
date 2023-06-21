@@ -35,8 +35,8 @@ namespace BerldPokerEngine
 
             int wildCardOffset = 0;
 
-            // Special case with no dead cards and no opponents
-            if (aliveCards.Count == AllCardsAmount && players.Count == 1)
+            // Special case with no opponents
+            if (players.Count == 1)
             {
                 evaluateAction = NestIterateCombinations(wildCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
             }
