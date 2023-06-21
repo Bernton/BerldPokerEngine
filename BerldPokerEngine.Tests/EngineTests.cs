@@ -1,4 +1,5 @@
 using BerldPokerEngine.Poker;
+using Xunit;
 
 namespace BerldPokerEngine.Tests
 {
