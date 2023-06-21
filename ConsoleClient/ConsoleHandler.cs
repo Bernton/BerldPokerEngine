@@ -54,6 +54,14 @@ namespace ConsoleClient
                 Environment.Exit(1);
             }
 
+            long iterations = Engine.CalculateIterationAmount(boardCards, holeCards);
+
+            if (iterations > 300_000_000)
+            {
+                Console.Error.WriteLine("Input requires more iterations than permitted.");
+                Environment.Exit(1);
+            }
+
             DateTime startTime = DateTime.Now;
 
             List<Player> playerStats = Engine.Evaluate(boardCards, holeCards);
