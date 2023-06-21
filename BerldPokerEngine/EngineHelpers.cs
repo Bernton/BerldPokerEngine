@@ -88,11 +88,15 @@ namespace BerldPokerEngine
             List<List<Card>> validHoleCards = EnsureValidHoleCards(holeCards);
 
             List<Player> players = GetPlayersFromHoleCards(validHoleCards);
-            List<Card> aliveCards = GetAliveCards(players, validBoardCards);
+
+            EnsureNoDuplicateCards(players, validBoardCards);
+            EnsureEnoughCardsAlive(players.Count);
 
             int wildBoardCardAmount = BoardCardAmount - validBoardCards.Count;
             int wildPlayerCardAmount = GetWildPlayerCardAmount(players);
             int wildCardAmount = wildBoardCardAmount + wildPlayerCardAmount;
+
+            List<Card> aliveCards = GetAliveCards(players, validBoardCards);
 
             int cardsLeftAmount = aliveCards.Count;
             long iterationAmount = 1;
@@ -100,7 +104,7 @@ namespace BerldPokerEngine
             // Special case with no opponents
             if (players.Count == 1)
             {
-                iterationAmount *= GetBinCoeff(aliveCards.Count, wildCardAmount);
+                iterationAmount *= GetBinCoeff(cardsLeftAmount, wildCardAmount);
             }
             else
             {

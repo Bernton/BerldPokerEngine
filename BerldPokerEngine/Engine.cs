@@ -1,5 +1,4 @@
 ﻿using BerldPokerEngine.Poker;
-using System.Linq;
 using static BerldPokerEngine.EngineHelpers;
 
 namespace BerldPokerEngine
