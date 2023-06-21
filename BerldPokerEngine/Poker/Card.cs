@@ -4,17 +4,20 @@
     {
         internal int Rank { get; }
         internal int Suit { get; }
+        internal int Index { get; }
 
         internal Card(int rank, int suit)
         {
             Rank = rank;
             Suit = suit;
+            Index = rank * Poker.Suit.Amount + suit;
         }
 
         internal Card(int index)
         {
             Rank = index / Poker.Suit.Amount;
             Suit = index % Poker.Suit.Amount;
+            Index = index;
         }
 
         public static Card Create(int rank, int suit)

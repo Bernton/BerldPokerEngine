@@ -6,6 +6,7 @@ namespace BerldPokerEngine.API
     public class Program
     {
         private const long MaxPermittedIterations = 300_000_000L;
+        private const int RandomIterations = 10_000_000;
 
         public static void Main(string[] args)
         {
@@ -74,12 +75,19 @@ namespace BerldPokerEngine.API
 
                 long iterationAmount = ExhaustiveEngine.CalculateIterationAmount(boardCards, holeCards);
 
-                if (iterationAmount > MaxPermittedIterations)
-                    return Results.BadRequest("Requested input needs more iterations than permitted.");
+                bool isExhaustive = iterationAmount <= MaxPermittedIterations;
 
                 DateTime startTime = DateTime.Now;
+                List<Player> playerStats;
 
-                List<Player> playerStats = ExhaustiveEngine.Evaluate(boardCards, holeCards);
+                if (isExhaustive)
+                {
+                    playerStats = ExhaustiveEngine.Evaluate(boardCards, holeCards);
+                }
+                else
+                {
+                    playerStats = RandomEngine.Evaluate(boardCards, holeCards, RandomIterations);
+                }
 
                 DateTime endTime = DateTime.Now;
                 TimeSpan elapsed = endTime - startTime;
@@ -88,6 +96,7 @@ namespace BerldPokerEngine.API
 
                 return Results.Ok(new EvaluationResultDto()
                 {
+                    IsExhaustive = isExhaustive,
                     TimeInMilliseconds = elapsed.TotalMilliseconds,
                     PlayerStats = playerDtos
                 });

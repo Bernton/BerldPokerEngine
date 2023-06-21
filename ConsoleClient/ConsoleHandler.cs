@@ -5,7 +5,8 @@ namespace ConsoleClient
 {
     internal static class ConsoleHandler
     {
-        private const long MaxPermittedIterations = 3_000_000_000L;
+        private const long MaxExhaustiveIterations = 3_000_000_000L;
+        private const int RandomIterations = 10_000_000;
 
         internal static void Evaluate(string[] args)
         {
@@ -58,12 +59,14 @@ namespace ConsoleClient
 
             long iterations = ExhaustiveEngine.CalculateIterationAmount(boardCards, holeCards);
 
-            if (iterations > MaxPermittedIterations)
+            bool useExhaustive = iterations <= MaxExhaustiveIterations;
+
+            if (!useExhaustive)
             {
-                Console.Error.WriteLine("Input requires more iterations than permitted.");
-                Console.Error.WriteLine($"Required:\t{iterations,25}");
-                Console.Error.WriteLine($"Permitted:\t{MaxPermittedIterations,25}");
-                Environment.Exit(1);
+                Console.WriteLine("Input requires more iterations than permitted for exhaustive.");
+                Console.WriteLine($"Required:\t{iterations,25}");
+                Console.WriteLine($"Permitted:\t{MaxExhaustiveIterations,25}");
+                Console.WriteLine($"Switching to {RandomIterations} random iterations.");
             }
             else
             {
@@ -71,8 +74,16 @@ namespace ConsoleClient
             }
 
             DateTime startTime = DateTime.Now;
+            List<Player> playerStats;
 
-            List<Player> playerStats = ExhaustiveEngine.Evaluate(boardCards, holeCards);
+            if (useExhaustive)
+            {
+                playerStats = ExhaustiveEngine.Evaluate(boardCards, holeCards);
+            }
+            else
+            {
+                playerStats = RandomEngine.Evaluate(boardCards, holeCards, RandomIterations);
+            }
 
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - startTime;
