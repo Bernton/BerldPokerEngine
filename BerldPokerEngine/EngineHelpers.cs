@@ -6,8 +6,8 @@ namespace BerldPokerEngine
     {
         internal const int CardsToEvaluateAmount = 7;
         internal const int BoardCardAmount = 5;
+        internal const int AllCardsAmount = 52;
         private const int PlayerCardAmount = 2;
-        private const int AllCardsAmount = 52;
 
         internal static List<Card> EnsureValidBoardCards(List<Card>? boardCards)
         {
@@ -88,6 +88,12 @@ namespace BerldPokerEngine
             List<List<Card>> validHoleCards = EnsureValidHoleCards(holeCards);
             List<Player> players = GetPlayersFromHoleCards(validHoleCards);
             List<Card> aliveCards = GetAliveCards(players, validBoardCards);
+
+            // Special case with no dead cards and no opponents
+            if (aliveCards.Count == AllCardsAmount && players.Count == 1)
+            {
+                return GetBinCoeff(aliveCards.Count, BoardCardAmount + PlayerCardAmount);
+            }
 
             int cardsLeftAmount = aliveCards.Count;
             long iterationAmount = 1;

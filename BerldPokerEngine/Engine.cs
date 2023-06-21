@@ -35,18 +35,26 @@ namespace BerldPokerEngine
 
             int wildCardOffset = 0;
 
-            if (wildBoardCardAmount > 0)
+            // Special case with no dead cards and no opponents
+            if (aliveCards.Count == AllCardsAmount && players.Count == 1)
             {
-                evaluateAction = NestIterateCombinations(wildBoardCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
-                wildCardOffset += wildBoardCardAmount;
+                evaluateAction = NestIterateCombinations(wildCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
             }
-
-            foreach (Player player in players)
+            else
             {
-                if (player.WildCardAmount > 0)
+                if (wildBoardCardAmount > 0)
                 {
-                    evaluateAction = NestIterateCombinations(player.WildCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
-                    wildCardOffset += player.WildCardAmount;
+                    evaluateAction = NestIterateCombinations(wildBoardCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
+                    wildCardOffset += wildBoardCardAmount;
+                }
+
+                foreach (Player player in players)
+                {
+                    if (player.WildCardAmount > 0)
+                    {
+                        evaluateAction = NestIterateCombinations(player.WildCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
+                        wildCardOffset += player.WildCardAmount;
+                    }
                 }
             }
 
