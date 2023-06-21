@@ -5,6 +5,8 @@ namespace BerldPokerEngine.API
 {
     public class Program
     {
+        private const long MaxPermittedIterations = 300_000_000L;
+
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -72,7 +74,7 @@ namespace BerldPokerEngine.API
 
                 long iterationAmount = Engine.CalculateIterationAmount(boardCards, holeCards);
 
-                if (iterationAmount > 300_000_000)
+                if (iterationAmount > MaxPermittedIterations)
                     return Results.BadRequest("Requested input needs more iterations than permitted.");
 
                 DateTime startTime = DateTime.Now;

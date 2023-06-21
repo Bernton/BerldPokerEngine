@@ -5,6 +5,8 @@ namespace ConsoleClient
 {
     internal static class ConsoleHandler
     {
+        private const long MaxPermittedIterations = 3_000_000_000L;
+
         internal static void Evaluate(string[] args)
         {
             if (args.Length != 1)
@@ -56,10 +58,16 @@ namespace ConsoleClient
 
             long iterations = Engine.CalculateIterationAmount(boardCards, holeCards);
 
-            if (iterations > 300_000_000)
+            if (iterations > MaxPermittedIterations)
             {
                 Console.Error.WriteLine("Input requires more iterations than permitted.");
+                Console.Error.WriteLine($"Required:\t{iterations,25}");
+                Console.Error.WriteLine($"Permitted:\t{MaxPermittedIterations,25}");
                 Environment.Exit(1);
+            }
+            else
+            {
+                Console.WriteLine($"Iterations: {iterations}");
             }
 
             DateTime startTime = DateTime.Now;
@@ -76,7 +84,7 @@ namespace ConsoleClient
             Console.WriteLine($"Speed: {equityPerMillisecond:0} equity/ms");
             Console.WriteLine();
             Console.WriteLine($"Board:     {boardInput}");
-            WriteEquityLine("Total", "\t\t\t", totalEquity, 100.0);
+            WriteEquityLine("Equity", "\t\t\t", totalEquity, 100.0);
             Console.WriteLine();
 
             foreach (Player player in playerStats)
