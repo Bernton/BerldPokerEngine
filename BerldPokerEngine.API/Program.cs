@@ -77,8 +77,8 @@ namespace BerldPokerEngine.API
 
                 bool isExhaustive = iterationAmount <= MaxPermittedIterations;
 
-                DateTime startTime = DateTime.Now;
                 List<Player> playerStats;
+                DateTime startTime = DateTime.Now;
 
                 if (isExhaustive)
                 {

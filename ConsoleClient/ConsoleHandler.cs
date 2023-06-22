@@ -73,8 +73,8 @@ namespace ConsoleClient
                 Console.WriteLine($"Iterations: {iterations}");
             }
 
-            DateTime startTime = DateTime.Now;
             List<Player> playerStats;
+            DateTime startTime = DateTime.Now;
 
             if (useExhaustive)
             {
