@@ -7,34 +7,14 @@
     <title>Document</title>
   </head>
   <body>
-    <h1>BerldPokerEngine.Web</h1>
-    <div
-      style="
-        display: flex;
-        width: 100%;
-        height: 3em;
-        align-items: center;
-        gap: 1em;
-      "
-    >
-      <input
-        id="evaluation-input"
-        type="text"
-        value="XxXxXxXxXx XxXx"
-        style="height: 1.25em"
-      />
-      <input
-        id="evaluate"
-        type="button"
-        value="Evaluate"
-        style="height: 1.7em"
-      />
-      <div id="evaluation-loader" class="loader" style="display: none"></div>
-    </div>
-    <p id="error-message" style="color: red"></p>
+    <script type="importmap">
+      {
+        "imports": { "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js" }
+      }
+    </script>
 
-    <p id="evaluation-output"></p>
+    <div id="app"></div>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
