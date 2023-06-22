@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h1>BerldPokerEngine.Web</h1>
+    <div
+      style="
+        display: flex;
+        width: 100%;
+        height: 3em;
+        align-items: center;
+        gap: 1em;
+      "
+    >
+      <input
+        id="evaluation-input"
+        type="text"
+        value="XxXxXxXxXx XxXx"
+        style="height: 1.25em"
+      />
+      <input
+        id="evaluate"
+        type="button"
+        value="Evaluate"
+        style="height: 1.7em"
+      />
+      <div id="evaluation-loader" class="loader" style="display: none"></div>
+    </div>
+    <p id="error-message" style="color: red"></p>
+
+    <p id="evaluation-output"></p>
+
+    <script src="app.js"></script>
+  </body>
+</html>
