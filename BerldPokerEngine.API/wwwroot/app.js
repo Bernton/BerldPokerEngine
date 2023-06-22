@@ -6,8 +6,8 @@ const errorMessageElement = document.getElementById("error-message");
 const evaluationLoaderElement = document.getElementById("evaluation-loader");
 const evaluationOuputElement = document.getElementById("evaluation-output");
 
-const baseUrl = window.location.href;
-const evaluationUrl = baseUrl + "evaluate";
+const baseUrl = window.location.origin;
+const evaluationUrl = baseUrl + "/evaluate";
 
 const defaultInititalEvaluationInput = "XxXxXxXxXx XxXx";
 const initialEvaluationInput =
