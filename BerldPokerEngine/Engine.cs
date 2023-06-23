@@ -214,7 +214,7 @@ namespace BerldPokerEngine
         private static void SetHandValue(Card[] cards, Player player)
         {
             // Straight flush
-            int[] suitAmounts = new int[Suit.Amount];
+            Span<int> suitAmounts = stackalloc int[Suit.Amount];
             int? flushSuit = null;
 
             for (int i = 0; i < cards.Length; i++)
@@ -229,7 +229,7 @@ namespace BerldPokerEngine
                 }
             }
 
-            bool[] coveredFlushRanks = new bool[Rank.Amount];
+            Span<bool> coveredFlushRanks = stackalloc bool[Rank.Amount];
 
             if (flushSuit.HasValue)
             {
@@ -272,7 +272,7 @@ namespace BerldPokerEngine
                 }
             }
 
-            int[] rankAmounts = new int[Rank.Amount];
+            Span<int> rankAmounts = stackalloc int[Rank.Amount];
 
             for (int i = 0; i < cards.Length; i++)
             {
