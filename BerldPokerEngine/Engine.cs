@@ -225,6 +225,7 @@ namespace BerldPokerEngine
                 if (suitAmounts[cardSuit] == 5)
                 {
                     flushSuit = cardSuit;
+                    break;
                 }
             }
 
@@ -232,11 +233,6 @@ namespace BerldPokerEngine
 
             if (flushSuit.HasValue)
             {
-                for (int i = 0; i < Rank.Amount; i++)
-                {
-                    coveredFlushRanks[i] = false;
-                }
-
                 for (int i = 0; i < cards.Length; i++)
                 {
                     Card card = cards[i];
