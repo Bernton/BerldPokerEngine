@@ -76,6 +76,7 @@ export default {
 function extendEvaluationData(data) {
   let extendedData = { ...data };
   let totalEquity = 0;
+  let highestPlayerEquity = 0;
 
   data.playerStats.forEach((player, playerI) => {
     let totalPlayerEquity = 0;
@@ -83,6 +84,11 @@ function extendEvaluationData(data) {
 
     for (let i = 0; i < 10; i++) {
       const equity = player.winEquities[i] + player.tieEquities[i];
+
+      if (equity > highestPlayerEquity) {
+        highestPlayerEquity = equity;
+      }
+
       totalPlayerEquity += equity;
       equities.push(equity);
     }
@@ -93,5 +99,6 @@ function extendEvaluationData(data) {
   });
 
   extendedData.totalEquity = totalEquity;
+  extendedData.highestPlayerEquity = highestPlayerEquity;
   return extendedData;
 }

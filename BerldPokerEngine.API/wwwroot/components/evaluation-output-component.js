@@ -1,4 +1,9 @@
+import PlayerComponent from "./player-component.js";
+
 export default {
+  components: {
+    PlayerComponent
+  },
   props: {
     isExhaustive: {
       type: Boolean,
@@ -15,22 +20,21 @@ export default {
     totalEquity: {
       type: Number,
       default: 0
+    },
+    highestPlayerEquity: {
+      type: Number,
+      default: 0
     }
   },
-  setup() {
-    return {
-      toPercentage(value, total) {
-        const percent = (value / total) * 100;
-        return percent.toFixed(2) + "%";
-      }
-    };
-  },
+  setup() {},
   template: `<div v-if="playerStats">
-    <h2>Elapsed: {{ timeInMilliseconds }} ms</h2>
-    <h2>Equity: {{ totalEquity }}</h2>
+    <p>Elapsed: {{ timeInMilliseconds }} ms</p>
+    <p>Equity: {{ totalEquity }}</p>
 
-    <li v-for="player in playerStats">
-    Equity Player {{player.index + 1}}: {{ toPercentage(player.totalEquity, totalEquity)}}
-    </li>
+    <div style="display: flex; flex-wrap: wrap">
+      <template v-for="player in playerStats">
+        <player-component v-bind="player" v-bind:highestPlayerEquity="highestPlayerEquity" v-bind:allPlayerEquity="totalEquity"></player-component>
+      </template>
+    </div>
   </div>`
 };
