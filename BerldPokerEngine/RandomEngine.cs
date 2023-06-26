@@ -7,6 +7,11 @@ namespace BerldPokerEngine
         public static List<Player> Evaluate(List<Card>? boardCards, List<List<Card>?> holeCards, int iterationAmount)
         {
             Random random = new();
+            return Evaluate(boardCards, holeCards, iterationAmount, random.Next);
+        }
+
+        public static List<Player> Evaluate(List<Card>? boardCards, List<List<Card>?> holeCards, int iterationAmount, Func<int, int> randomProvider)
+        {
             EngineData data = new(boardCards, holeCards);
 
             int[] aliveCardIndexes = new int[data.AliveCards.Count];
@@ -22,7 +27,7 @@ namespace BerldPokerEngine
 
                 for (int i = 0; i < wildCardIndexes.Length; i++)
                 {
-                    int chosenIndex = random.Next(aliveCardIndexes.Length - i);
+                    int chosenIndex = randomProvider(aliveCardIndexes.Length - i);
                     wildCardIndexes[i] = aliveCardIndexes[chosenIndex];
                     aliveCardIndexes[chosenIndex] = aliveCardIndexes[lastAliveCardI - i];
                 }

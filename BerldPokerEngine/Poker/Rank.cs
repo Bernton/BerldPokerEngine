@@ -18,7 +18,7 @@
         public const int King = 11;
         public const int Ace = 12;
 
-        internal static char ToChar(int rank)
+        public static char ToChar(int rank)
         {
             return rank switch
             {

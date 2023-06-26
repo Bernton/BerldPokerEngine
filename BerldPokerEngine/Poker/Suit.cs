@@ -9,7 +9,7 @@
         public const int Hearts = 2;
         public const int Spades = 3;
 
-        internal static char ToChar(int suit)
+        public static char ToChar(int suit)
         {
             return suit switch
             {

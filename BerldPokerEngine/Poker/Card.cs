@@ -2,8 +2,8 @@
 {
     public readonly struct Card
     {
-        internal int Rank { get; }
-        internal int Suit { get; }
+        public int Rank { get; }
+        public int Suit { get; }
         internal int Index { get; }
 
         internal Card(int rank, int suit)
