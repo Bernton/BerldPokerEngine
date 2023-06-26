@@ -4,97 +4,12 @@ namespace BerldPokerEngine
 {
     internal static class Engine
     {
-        internal const int CardsToEvaluateAmount = 7;
-
-        private const int AllCardsAmount = 52;
-        private const int BoardCardAmount = 5;
-        private const int PlayerCardAmount = 2;
-
-
-        internal static List<Card> EnsureValidBoardCards(List<Card>? boardCards)
-        {
-            if (boardCards is null)
-            {
-                boardCards ??= new();
-            }
-            else if (boardCards.Count > BoardCardAmount)
-            {
-                throw new ArgumentException($"{nameof(boardCards)} must have {BoardCardAmount} or fewer cards.");
-            }
-
-            return boardCards;
-        }
-
-        internal static List<List<Card>> EnsureValidHoleCards(List<List<Card>?> holeCards)
-        {
-            List<List<Card>> validHoleCards = new();
-
-            if (holeCards.Count == 0)
-            {
-                throw new ArgumentException($"{nameof(holeCards)} must not be empty.");
-            }
-
-            foreach (List<Card>? playerCards in holeCards)
-            {
-                if (playerCards is not null && playerCards.Count > PlayerCardAmount)
-                {
-                    throw new ArgumentException($"{nameof(playerCards)} must have {PlayerCardAmount} or fewer cards.");
-                }
-
-                List<Card> validPlayerCards = playerCards ?? new();
-                validHoleCards.Add(validPlayerCards);
-            }
-
-            return validHoleCards;
-        }
-
-        internal static void EnsureNoDuplicateCards(List<Player> players, List<Card> boardCards)
-        {
-            List<Card> deadCards = GetDeadCards(players, boardCards);
-
-            if (deadCards.Distinct().Count() != deadCards.Count)
-            {
-                throw new ArgumentException("Duplicate cards must not exist.");
-            }
-        }
-
-        internal static void EnsureEnoughCardsAlive(int playerAmount)
-        {
-            int deadCardAmount = BoardCardAmount + playerAmount * PlayerCardAmount;
-
-            if (deadCardAmount > AllCardsAmount)
-            {
-                throw new ArgumentException("There must be enough alive cards.");
-            }
-        }
-
-        internal static int GetWildBoardCardAmount(int boardCards)
-        {
-            return BoardCardAmount - boardCards;
-        }
-
-        internal static int GetWildPlayerCardAmount(List<Player> players)
-        {
-            return players.Count * PlayerCardAmount - players.Sum(c => c.HoleCards.Count);
-        }
-
-        internal static List<Player> GetPlayersFromHoleCards(List<List<Card>> holeCards)
-        {
-            return holeCards.Select((holeCards, index) => new Player(index, holeCards)).ToList();
-        }
-
-        internal static List<Card> GetAliveCards(List<Player> players, List<Card> boardCards)
-        {
-            List<Card> deadCards = GetDeadCards(players, boardCards);
-            return GetAllCards().Except(deadCards).ToList();
-        }
-
         internal static void DoIteration(int[] wildCardIndexes, List<Card> boardCards, List<Card> aliveCards,
             List<Player> players, List<int> winners, Card[] cardsToEvaluate)
         {
             int wildCardI = 0;
 
-            for (int boardCardI = 0; boardCardI < BoardCardAmount; boardCardI++)
+            for (int boardCardI = 0; boardCardI < EngineData.BoardCardAmount; boardCardI++)
             {
                 bool isWildCard = boardCardI >= boardCards.Count;
 
@@ -109,7 +24,7 @@ namespace BerldPokerEngine
             {
                 Player player = players[i];
 
-                for (int playerCardI = 0; playerCardI < 2; playerCardI++)
+                for (int playerCardI = 0; playerCardI < EngineData.PlayerCardAmount; playerCardI++)
                 {
                     bool isWildCard = playerCardI >= player.HoleCards.Count;
 
@@ -117,7 +32,7 @@ namespace BerldPokerEngine
                         aliveCards[wildCardIndexes[wildCardI++]] :
                         player.HoleCards[playerCardI];
 
-                    cardsToEvaluate[BoardCardAmount + playerCardI] = playerCardToEvaluate;
+                    cardsToEvaluate[EngineData.BoardCardAmount + playerCardI] = playerCardToEvaluate;
                 }
 
                 SetHandValue(cardsToEvaluate, player);
@@ -125,90 +40,6 @@ namespace BerldPokerEngine
 
             SetWinners(players, winners);
             AddEquities(players, winners);
-        }
-
-        private static List<Card> GetDeadCards(List<Player> players, List<Card> boardCards)
-        {
-            List<Card> seed = new(boardCards);
-            List<Card> deadCards = players.Aggregate(seed, (a, b) => a.Concat(b.HoleCards).ToList());
-            return deadCards;
-        }
-
-        private static List<Card> GetAllCards()
-        {
-            List<Card> cards = new();
-
-            for (int i = 0; i < AllCardsAmount; i++)
-            {
-                cards.Add(new Card(i));
-            }
-
-            return cards;
-        }
-
-        private static void SetWinners(List<Player> players, List<int> winners)
-        {
-            winners.Clear();
-            winners.Add(0);
-
-            for (int i = 1; i < players.Count; i++)
-            {
-                HandValue value = players[i].Value;
-                HandValue winnerValue = players[winners[0]].Value;
-
-                int comparison = value.CompareTo(winnerValue);
-
-                if (comparison > 0)
-                {
-                    winners.Clear();
-                }
-
-                if (comparison >= 0)
-                {
-                    winners.Add(i);
-                }
-            }
-        }
-
-        private static void AddEquities(List<Player> players, List<int> winners)
-        {
-            // Win
-            if (winners.Count == 1)
-            {
-                Player winner = players[winners[0]];
-                int handIndex = winner.Value.Hand;
-                winner.Equities[handIndex] += 1.0;
-                winner.WinEquities[handIndex] += 1;
-            }
-            else
-            {
-                // Tie
-                double tieEquity = 1.0 / winners.Count;
-
-                for (int i = 0; i < winners.Count; i++)
-                {
-                    Player tied = players[winners[i]];
-                    int handIndex = tied.Value.Hand;
-                    tied.Equities[handIndex] += tieEquity;
-                    tied.TieEquities[handIndex] += tieEquity;
-                }
-            }
-
-            // Negative (Loss)
-            int winnersIndex = 0;
-
-            for (int i = 0; i < players.Count; i++)
-            {
-                if (winnersIndex < winners.Count && i == winners[winnersIndex])
-                {
-                    winnersIndex++;
-                    continue;
-                }
-
-                Player loser = players[i];
-                int handIndex = loser.Value.Hand;
-                loser.NegativeEquities[handIndex] += 1;
-            }
         }
 
         private static void SetHandValue(Card[] cards, Player player)
@@ -487,6 +318,71 @@ namespace BerldPokerEngine
                         break;
                     }
                 }
+            }
+        }
+
+        private static void SetWinners(List<Player> players, List<int> winners)
+        {
+            winners.Clear();
+            winners.Add(0);
+
+            for (int i = 1; i < players.Count; i++)
+            {
+                HandValue value = players[i].Value;
+                HandValue winnerValue = players[winners[0]].Value;
+
+                int comparison = value.CompareTo(winnerValue);
+
+                if (comparison > 0)
+                {
+                    winners.Clear();
+                }
+
+                if (comparison >= 0)
+                {
+                    winners.Add(i);
+                }
+            }
+        }
+
+        private static void AddEquities(List<Player> players, List<int> winners)
+        {
+            // Win
+            if (winners.Count == 1)
+            {
+                Player winner = players[winners[0]];
+                int handIndex = winner.Value.Hand;
+                winner.Equities[handIndex] += 1.0;
+                winner.WinEquities[handIndex] += 1;
+            }
+            else
+            {
+                // Tie
+                double tieEquity = 1.0 / winners.Count;
+
+                for (int i = 0; i < winners.Count; i++)
+                {
+                    Player tied = players[winners[i]];
+                    int handIndex = tied.Value.Hand;
+                    tied.Equities[handIndex] += tieEquity;
+                    tied.TieEquities[handIndex] += tieEquity;
+                }
+            }
+
+            // Negative (Loss)
+            int winnersIndex = 0;
+
+            for (int i = 0; i < players.Count; i++)
+            {
+                if (winnersIndex < winners.Count && i == winners[winnersIndex])
+                {
+                    winnersIndex++;
+                    continue;
+                }
+
+                Player loser = players[i];
+                int handIndex = loser.Value.Hand;
+                loser.NegativeEquities[handIndex] += 1;
             }
         }
     }

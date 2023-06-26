@@ -7,26 +7,9 @@ namespace BerldPokerEngine
     {
         public static List<Player> Evaluate(List<Card>? boardCards, List<List<Card>?> holeCards, int iterationAmount)
         {
-            List<Card> validBoardCards = Engine.EnsureValidBoardCards(boardCards);
-            List<List<Card>> validHoleCards = Engine.EnsureValidHoleCards(holeCards);
+            EngineData data = new(boardCards, holeCards);
 
-            List<Player> players =
-                Engine.GetPlayersFromHoleCards(validHoleCards)
-                .OrderBy(c => c.HoleCards.Count).ToList();
-
-            Engine.EnsureNoDuplicateCards(players, validBoardCards);
-            Engine.EnsureEnoughCardsAlive(players.Count);
-
-            int wildBoardCardAmount = Engine.GetWildBoardCardAmount(validBoardCards.Count);
-            int wildPlayerCardAmount = Engine.GetWildPlayerCardAmount(players);
-            int wildCardAmount = wildBoardCardAmount + wildPlayerCardAmount;
-
-            List<Card> aliveCards = Engine.GetAliveCards(players, validBoardCards);
-            int[] aliveCardIndexes = new int[aliveCards.Count];
-            int[] wildCardIndexes = new int[wildCardAmount];
-
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[Engine.CardsToEvaluateAmount];
+            int[] aliveCardIndexes = new int[data.AliveCards.Count];
 
             for (int iterationI = 0; iterationI < iterationAmount; iterationI++)
             {
@@ -35,17 +18,17 @@ namespace BerldPokerEngine
                     aliveCardIndexes[i] = i;
                 }
 
-                for (int i = 0; i < wildCardIndexes.Length; i++)
+                for (int i = 0; i < data.WildCardIndexes.Length; i++)
                 {
                     int chosenIndex = RandomNumberGenerator.GetInt32(aliveCardIndexes.Length - i);
-                    wildCardIndexes[i] = aliveCardIndexes[chosenIndex];
+                    data.WildCardIndexes[i] = aliveCardIndexes[chosenIndex];
                     aliveCardIndexes[chosenIndex] = aliveCardIndexes[^(1 + i)];
                 }
 
-                Engine.DoIteration(wildCardIndexes, validBoardCards, aliveCards, players, winners, cardsToEvaluate);
+                Engine.DoIteration(data.WildCardIndexes, data.BoardCards, data.AliveCards, data.Players, data.Winners, data.CardsToEvaluate);
             }
 
-            return players.OrderBy(c => c.Index).ToList();
+            return data.Players.OrderBy(c => c.Index).ToList();
         }
     }
 }

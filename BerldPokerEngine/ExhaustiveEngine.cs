@@ -6,90 +6,61 @@ namespace BerldPokerEngine
     {
         public static List<Player> Evaluate(List<Card>? boardCards, List<List<Card>?> holeCards)
         {
-            List<Card> validBoardCards = Engine.EnsureValidBoardCards(boardCards);
-            List<List<Card>> validHoleCards = Engine.EnsureValidHoleCards(holeCards);
-
-            List<Player> players =
-                Engine.GetPlayersFromHoleCards(validHoleCards)
-                .OrderBy(c => c.HoleCards.Count).ToList();
-
-            Engine.EnsureNoDuplicateCards(players, validBoardCards);
-            Engine.EnsureEnoughCardsAlive(players.Count);
-
-            int wildBoardCardAmount = Engine.GetWildBoardCardAmount(validBoardCards.Count);
-            int wildPlayerCardAmount = Engine.GetWildPlayerCardAmount(players);
-            int wildCardAmount = wildBoardCardAmount + wildPlayerCardAmount;
-
-            List<Card> aliveCards = Engine.GetAliveCards(players, validBoardCards);
-
-            List<int> winners = new();
-            Card[] cardsToEvaluate = new Card[Engine.CardsToEvaluateAmount];
+            EngineData data = new(boardCards, holeCards);
 
             Action<int[]> evaluateAction = (wildCardIndexes) =>
-                Engine.DoIteration(wildCardIndexes, validBoardCards, aliveCards, players, winners, cardsToEvaluate);
+                Engine.DoIteration(wildCardIndexes, data.BoardCards, data.AliveCards, data.Players, data.Winners, data.CardsToEvaluate);
 
             int wildCardOffset = 0;
 
             // Special case with no opponents
-            if (players.Count == 1)
+            if (data.Players.Count == 1)
             {
-                evaluateAction = NestIterateCombinations(wildCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
+                evaluateAction = NestIterateCombinations(data.WildCardAmount, data.AliveCards.Count, wildCardOffset, evaluateAction);
             }
             else
             {
-                if (wildBoardCardAmount > 0)
+                if (data.WildBoardCardAmount > 0)
                 {
-                    evaluateAction = NestIterateCombinations(wildBoardCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
-                    wildCardOffset += wildBoardCardAmount;
+                    evaluateAction = NestIterateCombinations(data.WildBoardCardAmount, data.AliveCards.Count, wildCardOffset, evaluateAction);
+                    wildCardOffset += data.WildBoardCardAmount;
                 }
 
-                foreach (Player player in players)
+                foreach (Player player in data.Players)
                 {
                     if (player.WildCardAmount > 0)
                     {
-                        evaluateAction = NestIterateCombinations(player.WildCardAmount, aliveCards.Count, wildCardOffset, evaluateAction);
+                        evaluateAction = NestIterateCombinations(player.WildCardAmount, data.AliveCards.Count, wildCardOffset, evaluateAction);
                         wildCardOffset += player.WildCardAmount;
                     }
                 }
             }
 
-            evaluateAction(new int[wildCardAmount]);
-            return players.OrderBy(c => c.Index).ToList();
+            evaluateAction(data.WildCardIndexes);
+            return data.Players.OrderBy(c => c.Index).ToList();
         }
 
         public static long CalculateIterationAmount(List<Card>? boardCards, List<List<Card>?> holeCards)
         {
-            List<Card> validBoardCards = Engine.EnsureValidBoardCards(boardCards);
-            List<List<Card>> validHoleCards = Engine.EnsureValidHoleCards(holeCards);
+            EngineData data = new(boardCards, holeCards);
 
-            List<Player> players = Engine.GetPlayersFromHoleCards(validHoleCards);
-
-            Engine.EnsureNoDuplicateCards(players, validBoardCards);
-            Engine.EnsureEnoughCardsAlive(players.Count);
-
-            int wildBoardCardAmount = Engine.GetWildBoardCardAmount(validBoardCards.Count);
-            int wildPlayerCardAmount = Engine.GetWildPlayerCardAmount(players);
-            int wildCardAmount = wildBoardCardAmount + wildPlayerCardAmount;
-
-            List<Card> aliveCards = Engine.GetAliveCards(players, validBoardCards);
-
-            int cardsLeftAmount = aliveCards.Count;
+            int cardsLeftAmount = data.AliveCards.Count;
             long iterationAmount = 1;
 
             // Special case with no opponents
-            if (players.Count == 1)
+            if (data.Players.Count == 1)
             {
-                iterationAmount *= GetBinCoeff(cardsLeftAmount, wildCardAmount);
+                iterationAmount *= GetBinCoeff(cardsLeftAmount, data.WildCardAmount);
             }
             else
             {
-                if (wildBoardCardAmount > 0)
+                if (data.WildBoardCardAmount > 0)
                 {
-                    iterationAmount *= GetBinCoeff(cardsLeftAmount, wildBoardCardAmount);
-                    cardsLeftAmount -= wildBoardCardAmount;
+                    iterationAmount *= GetBinCoeff(cardsLeftAmount, data.WildBoardCardAmount);
+                    cardsLeftAmount -= data.WildBoardCardAmount;
                 }
 
-                foreach (Player player in players)
+                foreach (Player player in data.Players)
                 {
                     if (player.WildCardAmount > 0)
                     {
