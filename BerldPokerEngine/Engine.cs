@@ -4,42 +4,41 @@ namespace BerldPokerEngine
 {
     internal static class Engine
     {
-        internal static void DoIteration(int[] wildCardIndexes, List<Card> boardCards, List<Card> aliveCards,
-            List<Player> players, List<int> winners, Card[] cardsToEvaluate)
+        internal static void DoIteration(int[] wildCardIndexes, EngineData data)
         {
             int wildCardI = 0;
 
             for (int boardCardI = 0; boardCardI < EngineData.BoardCardAmount; boardCardI++)
             {
-                bool isWildCard = boardCardI >= boardCards.Count;
+                bool isWildCard = boardCardI >= data.BoardCards.Count;
 
                 Card boardCardToEvaluate = isWildCard ?
-                    aliveCards[wildCardIndexes[wildCardI++]] :
-                    boardCards[boardCardI];
+                    data.AliveCards[wildCardIndexes[wildCardI++]] :
+                    data.BoardCards[boardCardI];
 
-                cardsToEvaluate[boardCardI] = boardCardToEvaluate;
+                data.CardsToEvaluate[boardCardI] = boardCardToEvaluate;
             }
 
-            for (int i = 0; i < players.Count; i++)
+            for (int i = 0; i < data.Players.Count; i++)
             {
-                Player player = players[i];
+                Player player = data.Players[i];
 
                 for (int playerCardI = 0; playerCardI < EngineData.PlayerCardAmount; playerCardI++)
                 {
                     bool isWildCard = playerCardI >= player.HoleCards.Count;
 
                     Card playerCardToEvaluate = isWildCard ?
-                        aliveCards[wildCardIndexes[wildCardI++]] :
+                        data.AliveCards[wildCardIndexes[wildCardI++]] :
                         player.HoleCards[playerCardI];
 
-                    cardsToEvaluate[EngineData.BoardCardAmount + playerCardI] = playerCardToEvaluate;
+                    data.CardsToEvaluate[EngineData.BoardCardAmount + playerCardI] = playerCardToEvaluate;
                 }
 
-                SetHandValue(cardsToEvaluate, player);
+                SetHandValue(data.CardsToEvaluate, player);
             }
 
-            SetWinners(players, winners);
-            AddEquities(players, winners);
+            SetWinners(data.Players, data.Winners);
+            AddEquities(data.Players, data.Winners);
         }
 
         private static void SetHandValue(Card[] cards, Player player)

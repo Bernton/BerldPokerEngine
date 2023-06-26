@@ -10,6 +10,7 @@ namespace BerldPokerEngine
             EngineData data = new(boardCards, holeCards);
 
             int[] aliveCardIndexes = new int[data.AliveCards.Count];
+            int[] wildCardIndexes = new int[data.WildCardAmount];
 
             for (int iterationI = 0; iterationI < iterationAmount; iterationI++)
             {
@@ -18,14 +19,14 @@ namespace BerldPokerEngine
                     aliveCardIndexes[i] = i;
                 }
 
-                for (int i = 0; i < data.WildCardIndexes.Length; i++)
+                for (int i = 0; i < wildCardIndexes.Length; i++)
                 {
                     int chosenIndex = RandomNumberGenerator.GetInt32(aliveCardIndexes.Length - i);
-                    data.WildCardIndexes[i] = aliveCardIndexes[chosenIndex];
+                    wildCardIndexes[i] = aliveCardIndexes[chosenIndex];
                     aliveCardIndexes[chosenIndex] = aliveCardIndexes[^(1 + i)];
                 }
 
-                Engine.DoIteration(data.WildCardIndexes, data.BoardCards, data.AliveCards, data.Players, data.Winners, data.CardsToEvaluate);
+                Engine.DoIteration(wildCardIndexes, data);
             }
 
             return data.Players.OrderBy(c => c.Index).ToList();

@@ -7,10 +7,7 @@ namespace BerldPokerEngine
         public static List<Player> Evaluate(List<Card>? boardCards, List<List<Card>?> holeCards)
         {
             EngineData data = new(boardCards, holeCards);
-
-            Action<int[]> evaluateAction = (wildCardIndexes) =>
-                Engine.DoIteration(wildCardIndexes, data.BoardCards, data.AliveCards, data.Players, data.Winners, data.CardsToEvaluate);
-
+            Action<int[]> evaluateAction = (wildCardIndexes) => Engine.DoIteration(wildCardIndexes, data);
             int wildCardOffset = 0;
 
             // Special case with no opponents
@@ -36,7 +33,8 @@ namespace BerldPokerEngine
                 }
             }
 
-            evaluateAction(data.WildCardIndexes);
+            int[] wildCardIndexes = new int[data.WildCardAmount];
+            evaluateAction(wildCardIndexes);
             return data.Players.OrderBy(c => c.Index).ToList();
         }
 

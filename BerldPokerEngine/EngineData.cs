@@ -17,7 +17,6 @@ namespace BerldPokerEngine
         internal List<Card> AliveCards { get; }
         internal List<int> Winners { get; }
         internal Card[] CardsToEvaluate { get; }
-        internal int[] WildCardIndexes { get; }
 
         internal EngineData(List<Card>? boardCards, List<List<Card>?> holeCards)
         {
@@ -39,7 +38,6 @@ namespace BerldPokerEngine
 
             Winners = new();
             CardsToEvaluate = new Card[CardsToEvaluateAmount];
-            WildCardIndexes = new int[WildCardAmount];
         }
 
         private static List<Card> EnsureValidBoardCards(List<Card>? boardCards)
