@@ -1,5 +1,6 @@
 using BerldPokerEngine.API.Dto;
 using BerldPokerEngine.Poker;
+using System.Numerics;
 
 namespace BerldPokerEngine.API
 {
@@ -73,7 +74,7 @@ namespace BerldPokerEngine.API
                 if (allCards.Distinct().Count() != allCards.Count)
                     return Results.BadRequest("Duplicate card input.");
 
-                long iterationAmount = ExhaustiveEngine.CalculateIterationAmount(boardCards, holeCards);
+                BigInteger iterationAmount = ExhaustiveEngine.CalculateIterationAmount(boardCards, holeCards);
 
                 bool isExhaustive = iterationAmount <= MaxPermittedIterations;
 

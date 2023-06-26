@@ -1,4 +1,5 @@
 ﻿using BerldPokerEngine.Poker;
+using System.Numerics;
 
 namespace BerldPokerEngine
 {
@@ -38,12 +39,12 @@ namespace BerldPokerEngine
             return data.Players.OrderBy(c => c.Index).ToList();
         }
 
-        public static long CalculateIterationAmount(List<Card>? boardCards, List<List<Card>?> holeCards)
+        public static BigInteger CalculateIterationAmount(List<Card>? boardCards, List<List<Card>?> holeCards)
         {
             EngineData data = new(boardCards, holeCards);
 
             int cardsLeftAmount = data.AliveCards.Count;
-            long iterationAmount = 1;
+            BigInteger iterationAmount = 1;
 
             // Special case with no opponents
             if (data.Players.Count == 1)

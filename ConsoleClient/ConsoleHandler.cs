@@ -1,5 +1,6 @@
 ﻿using BerldPokerEngine;
 using BerldPokerEngine.Poker;
+using System.Numerics;
 
 namespace ConsoleClient
 {
@@ -41,6 +42,12 @@ namespace ConsoleClient
 
             int playerAmount = holeCardInput.Length / 5;
 
+            if (playerAmount > 23)
+            {
+                Console.Error.WriteLine("Input defines too many players.");
+                Environment.Exit(1);
+            }
+
             for (int i = 0; i < playerAmount; i++)
             {
                 string playerCardInput = holeCardInput.Substring(i * 5 + 1, 4);
@@ -57,7 +64,7 @@ namespace ConsoleClient
                 Environment.Exit(1);
             }
 
-            long iterations = ExhaustiveEngine.CalculateIterationAmount(boardCards, holeCards);
+            BigInteger iterations = ExhaustiveEngine.CalculateIterationAmount(boardCards, holeCards);
 
             bool useExhaustive = iterations <= MaxExhaustiveIterations;
 
