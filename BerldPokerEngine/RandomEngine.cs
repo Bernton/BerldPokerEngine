@@ -11,6 +11,7 @@ namespace BerldPokerEngine
 
             int[] aliveCardIndexes = new int[data.AliveCards.Count];
             int[] wildCardIndexes = new int[data.WildCardAmount];
+            int lastAliveCardI = aliveCardIndexes.Length - 1;
 
             for (int iterationI = 0; iterationI < iterationAmount; iterationI++)
             {
@@ -23,7 +24,7 @@ namespace BerldPokerEngine
                 {
                     int chosenIndex = random.Next(aliveCardIndexes.Length - i);
                     wildCardIndexes[i] = aliveCardIndexes[chosenIndex];
-                    aliveCardIndexes[chosenIndex] = aliveCardIndexes[^(1 + i)];
+                    aliveCardIndexes[chosenIndex] = aliveCardIndexes[lastAliveCardI - i];
                 }
 
                 Engine.DoIteration(wildCardIndexes, data);
