@@ -1,5 +1,4 @@
 ﻿using BerldPokerEngine.Poker;
-using System.Security.Cryptography;
 
 namespace BerldPokerEngine
 {
@@ -7,6 +6,7 @@ namespace BerldPokerEngine
     {
         public static List<Player> Evaluate(List<Card>? boardCards, List<List<Card>?> holeCards, int iterationAmount)
         {
+            Random random = new();
             EngineData data = new(boardCards, holeCards);
 
             int[] aliveCardIndexes = new int[data.AliveCards.Count];
@@ -21,7 +21,7 @@ namespace BerldPokerEngine
 
                 for (int i = 0; i < wildCardIndexes.Length; i++)
                 {
-                    int chosenIndex = RandomNumberGenerator.GetInt32(aliveCardIndexes.Length - i);
+                    int chosenIndex = random.Next(aliveCardIndexes.Length - i);
                     wildCardIndexes[i] = aliveCardIndexes[chosenIndex];
                     aliveCardIndexes[chosenIndex] = aliveCardIndexes[^(1 + i)];
                 }
