@@ -2,7 +2,7 @@
 
 namespace BerldPokerEngine
 {
-    internal class EngineData
+    public class EngineData
     {
         internal const int BoardCardAmount = 5;
         internal const int PlayerCardAmount = 2;
@@ -125,7 +125,7 @@ namespace BerldPokerEngine
             return deadCards;
         }
 
-        private static List<Card> GetAllCards()
+        public static List<Card> GetAllCards()
         {
             List<Card> cards = new();
 

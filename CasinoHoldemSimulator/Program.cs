@@ -24,6 +24,7 @@ namespace CasinoHoldemSimulator
                 List<Card> playerCards = InputToCards(playerInput);
                 List<Card> flopCards = InputToCards(flopInput);
                 List<Card> deadCards = Enumerable.Concat(playerCards, flopCards).ToList();
+                List<Card> aliveCards = EngineData.GetAllCards().Except(deadCards).ToList();
 
                 if (deadCards.Distinct().Count() != deadCards.Count)
                 {
@@ -40,58 +41,59 @@ namespace CasinoHoldemSimulator
                 playerAllCards[5] = playerCards[0];
                 playerAllCards[6] = playerCards[1];
 
-                Deck deck = new();
-
-                foreach (Card card in deadCards)
-                {
-                    deck.Draw(card);
-                }
-
-                deck.Snapshot();
-
-                int iterationAmount = 1_000_000;
+                int iterationAmount = 1_070_190;
                 int iterationWinnings = 0;
                 int ante = 1;
                 int bet = ante * 2;
 
-                for (int u = 0; u < iterationAmount; u++)
+                for (int b4 = 0; b4 < aliveCards.Count; b4++)
                 {
-                    deck.Restore();
-
-                    dealerAllCards[5] = deck.Draw();
-                    dealerAllCards[6] = deck.Draw();
-
-                    for (int i = 3; i < 5; i++)
+                    for (int b5 = b4 + 1; b5 < aliveCards.Count; b5++)
                     {
-                        Card boardCard = deck.Draw();
-                        playerAllCards[i] = boardCard;
-                        dealerAllCards[i] = boardCard;
-                    }
-
-                    Engine.SetHandValue(playerAllCards, playerValue);
-                    Engine.SetHandValue(dealerAllCards, dealerValue);
-
-                    bool dealerDidNotQualify = dealerValue.Hand == Hand.HighCard ||
-                        (dealerValue.Hand == Hand.Pair &&
-                        dealerValue.Ranks[lastRankI] < Rank.Four);
-
-                    if (dealerDidNotQualify)
-                    {
-                        iterationWinnings += ante * GetMultiplier(playerValue);
-                    }
-                    else
-                    {
-                        int comparison = playerValue.CompareTo(dealerValue);
-
-                        if (comparison > 0)
+                        for (int d1 = 0; d1 < aliveCards.Count; d1++)
                         {
-                            iterationWinnings += bet;
-                            iterationWinnings += ante * GetMultiplier(playerValue);
-                        }
-                        else if (comparison < 0)
-                        {
-                            iterationWinnings -= bet;
-                            iterationWinnings -= ante;
+                            if (d1 == b4 || d1 == b5) continue;
+
+                            for (int d2 = d1 + 1; d2 < aliveCards.Count; d2++)
+                            {
+                                if (d2 == b4 || d2 == b5) continue;
+
+                                playerAllCards[3] = aliveCards[b4];
+                                dealerAllCards[3] = aliveCards[b4];
+
+                                playerAllCards[4] = aliveCards[b5];
+                                dealerAllCards[4] = aliveCards[b5];
+
+                                dealerAllCards[5] = aliveCards[d1];
+                                dealerAllCards[6] = aliveCards[d2];
+
+                                Engine.SetHandValue(playerAllCards, playerValue);
+                                Engine.SetHandValue(dealerAllCards, dealerValue);
+
+                                bool dealerDidNotQualify = dealerValue.Hand == Hand.HighCard ||
+                                    (dealerValue.Hand == Hand.Pair &&
+                                    dealerValue.Ranks[lastRankI] < Rank.Four);
+
+                                if (dealerDidNotQualify)
+                                {
+                                    iterationWinnings += ante * GetMultiplier(playerValue);
+                                }
+                                else
+                                {
+                                    int comparison = playerValue.CompareTo(dealerValue);
+
+                                    if (comparison > 0)
+                                    {
+                                        iterationWinnings += bet;
+                                        iterationWinnings += ante * GetMultiplier(playerValue);
+                                    }
+                                    else if (comparison < 0)
+                                    {
+                                        iterationWinnings -= bet;
+                                        iterationWinnings -= ante;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
