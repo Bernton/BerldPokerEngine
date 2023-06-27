@@ -1,11 +1,11 @@
 ﻿namespace BerldPokerEngine.Poker
 {
-    internal class HandValue : IComparable<HandValue>
+    public class HandValue : IComparable<HandValue>
     {
-        internal int Hand { get; set; }
-        internal int[] Ranks { get; }
+        public int Hand { get; set; }
+        public int[] Ranks { get; }
 
-        internal HandValue()
+        public HandValue()
         {
             Hand = default;
             Ranks = new int[5];

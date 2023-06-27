@@ -2,7 +2,7 @@
 
 namespace BerldPokerEngine
 {
-    internal static class Engine
+    public static class Engine
     {
         internal static void DoIteration(int[] wildCardIndexes, EngineData data)
         {
@@ -34,14 +34,14 @@ namespace BerldPokerEngine
                     data.CardsToEvaluate[EngineData.BoardCardAmount + playerCardI] = playerCardToEvaluate;
                 }
 
-                SetHandValue(data.CardsToEvaluate, player);
+                SetHandValue(data.CardsToEvaluate, player.Value);
             }
 
             SetWinners(data.Players, data.Winners);
             AddEquities(data.Players, data.Winners);
         }
 
-        private static void SetHandValue(Card[] cards, Player player)
+        public static void SetHandValue(Card[] cards, HandValue value)
         {
             // Straight flush
             Span<int> suitAmounts = stackalloc int[Suit.Amount];
@@ -87,16 +87,16 @@ namespace BerldPokerEngine
 
                     if (consecutiveFlushAmount == 5)
                     {
-                        player.Value.Hand = i == Rank.Ten ? Hand.RoyalFlush : Hand.StraightFlush;
-                        player.Value.Ranks[4] = i + 4;
-                        player.Value.Ranks[3] = -1;
+                        value.Hand = i == Rank.Ten ? Hand.RoyalFlush : Hand.StraightFlush;
+                        value.Ranks[4] = i + 4;
+                        value.Ranks[3] = -1;
                         return;
                     }
                     else if (consecutiveFlushAmount == 4 && i == Rank.Deuce && coveredFlushRanks[Rank.Ace])
                     {
-                        player.Value.Hand = Hand.StraightFlush;
-                        player.Value.Ranks[4] = Rank.Five;
-                        player.Value.Ranks[3] = -1;
+                        value.Hand = Hand.StraightFlush;
+                        value.Ranks[4] = Rank.Five;
+                        value.Ranks[3] = -1;
                         return;
                     }
                 }
@@ -118,10 +118,10 @@ namespace BerldPokerEngine
                     {
                         if (rankAmounts[j] > 0 && j != i)
                         {
-                            player.Value.Hand = Hand.FourOfAKind;
-                            player.Value.Ranks[4] = i;
-                            player.Value.Ranks[3] = j;
-                            player.Value.Ranks[2] = -1;
+                            value.Hand = Hand.FourOfAKind;
+                            value.Ranks[4] = i;
+                            value.Ranks[3] = j;
+                            value.Ranks[2] = -1;
                             return;
                         }
                     }
@@ -146,10 +146,10 @@ namespace BerldPokerEngine
                 {
                     if (rankAmounts[i] >= 2 && i != threeOfAKindRank.Value)
                     {
-                        player.Value.Hand = Hand.FullHouse;
-                        player.Value.Ranks[4] = threeOfAKindRank.Value;
-                        player.Value.Ranks[3] = i;
-                        player.Value.Ranks[2] = -1;
+                        value.Hand = Hand.FullHouse;
+                        value.Ranks[4] = threeOfAKindRank.Value;
+                        value.Ranks[3] = i;
+                        value.Ranks[2] = -1;
                         return;
                     }
                 }
@@ -158,14 +158,14 @@ namespace BerldPokerEngine
             // Flush
             if (flushSuit.HasValue)
             {
-                player.Value.Hand = Hand.Flush;
+                value.Hand = Hand.Flush;
                 int ranksIndex = 4;
 
                 for (int i = Rank.Ace; i >= Rank.Deuce; i--)
                 {
                     if (coveredFlushRanks[i])
                     {
-                        player.Value.Ranks[ranksIndex] = i;
+                        value.Ranks[ranksIndex] = i;
                         ranksIndex--;
 
                         if (ranksIndex < 0)
@@ -193,16 +193,16 @@ namespace BerldPokerEngine
 
                 if (consecutiveAmount == 5)
                 {
-                    player.Value.Hand = Hand.Straight;
-                    player.Value.Ranks[4] = i + 4;
-                    player.Value.Ranks[3] = -1;
+                    value.Hand = Hand.Straight;
+                    value.Ranks[4] = i + 4;
+                    value.Ranks[3] = -1;
                     return;
                 }
                 else if (consecutiveAmount == 4 && i == Rank.Deuce && rankAmounts[Rank.Ace] > 0)
                 {
-                    player.Value.Hand = Hand.Straight;
-                    player.Value.Ranks[4] = Rank.Five;
-                    player.Value.Ranks[3] = -1;
+                    value.Hand = Hand.Straight;
+                    value.Ranks[4] = Rank.Five;
+                    value.Ranks[3] = -1;
                     return;
                 }
             }
@@ -210,9 +210,9 @@ namespace BerldPokerEngine
             // Three of a kind
             if (threeOfAKindRank.HasValue)
             {
-                player.Value.Hand = Hand.ThreeOfAKind;
-                player.Value.Ranks[4] = threeOfAKindRank.Value;
-                player.Value.Ranks[1] = -1;
+                value.Hand = Hand.ThreeOfAKind;
+                value.Ranks[4] = threeOfAKindRank.Value;
+                value.Ranks[1] = -1;
 
                 int ranksIndex = 3;
 
@@ -220,7 +220,7 @@ namespace BerldPokerEngine
                 {
                     if (rankAmounts[i] > 0 && i != threeOfAKindRank.Value)
                     {
-                        player.Value.Ranks[ranksIndex] = i;
+                        value.Ranks[ranksIndex] = i;
                         ranksIndex--;
 
                         if (ranksIndex < 2)
@@ -264,11 +264,11 @@ namespace BerldPokerEngine
                     {
                         if (rankAmounts[i] > 0 && i != highestPairRank.Value && i != secondPairRank.Value)
                         {
-                            player.Value.Hand = Hand.TwoPair;
-                            player.Value.Ranks[4] = highestPairRank.Value;
-                            player.Value.Ranks[3] = secondPairRank.Value;
-                            player.Value.Ranks[2] = i;
-                            player.Value.Ranks[1] = -1;
+                            value.Hand = Hand.TwoPair;
+                            value.Ranks[4] = highestPairRank.Value;
+                            value.Ranks[3] = secondPairRank.Value;
+                            value.Ranks[2] = i;
+                            value.Ranks[1] = -1;
                             return;
                         }
                     }
@@ -278,9 +278,9 @@ namespace BerldPokerEngine
             // Pair
             if (highestPairRank.HasValue)
             {
-                player.Value.Hand = Hand.Pair;
-                player.Value.Ranks[4] = highestPairRank.Value;
-                player.Value.Ranks[0] = -1;
+                value.Hand = Hand.Pair;
+                value.Ranks[4] = highestPairRank.Value;
+                value.Ranks[0] = -1;
 
                 int ranksIndex = 3;
 
@@ -288,7 +288,7 @@ namespace BerldPokerEngine
                 {
                     if (rankAmounts[i] > 0 && i != highestPairRank.Value)
                     {
-                        player.Value.Ranks[ranksIndex] = i;
+                        value.Ranks[ranksIndex] = i;
                         ranksIndex--;
 
                         if (ranksIndex < 1)
@@ -302,14 +302,14 @@ namespace BerldPokerEngine
             }
 
             // High card
-            player.Value.Hand = Hand.HighCard;
+            value.Hand = Hand.HighCard;
             int highCardRanksIndex = 4;
 
             for (int i = Rank.Ace; i >= Rank.Deuce; i--)
             {
                 if (rankAmounts[i] > 0)
                 {
-                    player.Value.Ranks[highCardRanksIndex] = i;
+                    value.Ranks[highCardRanksIndex] = i;
                     highCardRanksIndex--;
 
                     if (highCardRanksIndex < 0)

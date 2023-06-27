@@ -4,7 +4,7 @@
     {
         public int Rank { get; }
         public int Suit { get; }
-        internal int Index { get; }
+        public int Index { get; }
 
         internal Card(int rank, int suit)
         {
