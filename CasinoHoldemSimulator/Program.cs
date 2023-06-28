@@ -36,13 +36,14 @@ namespace CasinoHoldemSimulator
             }
             else
             {
-                int workerCount = Environment.ProcessorCount;
+                int workerCount = Math.Max(1, Environment.ProcessorCount / 4);
 
                 if (args.Length == 1 && int.TryParse(args.First(), out int inputNumber))
                 {
                     workerCount = inputNumber;
                 }
-                else if (args.Length != 0)
+
+                if (args.Length != 0 || workerCount <= 0)
                 {
                     Console.Error.WriteLine("Invalid argument(s).");
                     Environment.Exit(1);
