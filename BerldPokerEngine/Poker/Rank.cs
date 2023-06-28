@@ -2,7 +2,7 @@
 {
     public static class Rank
     {
-        internal const int Amount = 13;
+        public const int Amount = 13;
 
         public const int Deuce = 0;
         public const int Tray = 1;

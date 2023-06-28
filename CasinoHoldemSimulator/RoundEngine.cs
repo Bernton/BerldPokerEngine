@@ -97,6 +97,46 @@ namespace CasinoHoldemSimulator
             return roundWinnings;
         }
 
+        internal static List<NormalRound> GetNormalRounds()
+        {
+            int bound = EngineData.AllCardsAmount;
+            Dictionary<string, NormalRound> normalRoundMap = new();
+
+            for (int p1 = 0; p1 < bound; p1++)
+            {
+                for (int p2 = p1 + 1; p2 < bound; p2++)
+                {
+                    for (int b1 = 0; b1 < bound; b1++)
+                    {
+                        if (b1 == p1 || b1 == p2) continue;
+
+                        for (int b2 = b1 + 1; b2 < bound; b2++)
+                        {
+                            if (b2 == p1 || b2 == p2) continue;
+
+                            for (int b3 = b2 + 1; b3 < bound; b3++)
+                            {
+                                if (b3 == p1 || b3 == p2) continue;
+
+                                NormalRound round = new(p1, p2, b1, b2, b3);
+
+                                if (normalRoundMap.ContainsKey(round.Key))
+                                {
+                                    normalRoundMap[round.Key].Frequency++;
+                                }
+                                else
+                                {
+                                    normalRoundMap.Add(round.Key, round);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return normalRoundMap.Values.ToList();
+        }
+
         private static int GetAnteMultiplier(HandValue value)
         {
             return value.Hand switch

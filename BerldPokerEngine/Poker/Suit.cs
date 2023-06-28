@@ -2,7 +2,7 @@
 {
     public static class Suit
     {
-        internal const int Amount = 4;
+        public const int Amount = 4;
 
         public const int Clubs = 0;
         public const int Diamonds = 1;

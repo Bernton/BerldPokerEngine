@@ -1,4 +1,6 @@
 ﻿using BerldPokerEngine.Poker;
+using System;
+using System.Diagnostics;
 
 namespace CasinoHoldemSimulator
 {
@@ -34,51 +36,93 @@ namespace CasinoHoldemSimulator
             }
             else if (args.Length == 0)
             {
-                DateTime startTime = DateTime.Now;
+                int workerCount = 3;
 
-                int roundAmount = 1_000_000;
-                int roundsFolded = 0;
-                long totalWinnings = 0;
+                List<NormalRound> allNormalRounds = RoundEngine.GetNormalRounds();
+                ExhaustiveWorker[] workers = new ExhaustiveWorker[workerCount];
+                int lastWorkerI = workerCount - 1;
 
-                Deck deck = new();
-                List<Card> playerCards = new() { default, default };
-                List<Card> flopCards = new() { default, default, default };
+                int normalRoundsPerWorker = allNormalRounds.Count / workerCount;
+                int normalRoundsAssigned = 0;
 
-                for (int u = 0; u < roundAmount; u++)
+                for (int i = 0; i < workerCount; i++)
                 {
-                    if (u % 100 == 0 && u > 0)
+                    bool isLastWorker = i == lastWorkerI;
+
+                    var skipRounds = allNormalRounds.Skip(normalRoundsAssigned);
+
+                    var workerRounds = isLastWorker ?
+                        skipRounds :
+                        skipRounds.Take(normalRoundsPerWorker);
+
+                    normalRoundsAssigned += normalRoundsPerWorker;
+
+                    workers[i] = new()
                     {
-                        WriteStatus(u, roundsFolded, totalWinnings, DateTime.Now - startTime);
+                        NormalRounds = workerRounds.ToList()
+                    };
+                }
+
+                for (int i = 0; i < workerCount; i++)
+                {
+                    workers[i].Prepare();
+                }
+
+                DateTime startTime = default;
+
+                CancellationTokenSource cancellationTokenSource = new();
+                Task outputTask = new(async () =>
+                {
+                    while (!cancellationTokenSource.IsCancellationRequested)
+                    {
+                        await Task.Delay(10_000);
+                        if (cancellationTokenSource.IsCancellationRequested) return;
+                        OutputStatus(workers, DateTime.Now - startTime, false);
                     }
+                }, cancellationTokenSource.Token);
 
-                    deck.Reset();
+                Task[] tasks = new Task[workerCount];
 
-                    for (int i = 0; i < RoundEngine.PlayerCardAmount; i++)
+                for (int i = 0; i < workerCount; i++)
+                {
+                    Task? workerTask = workers[i].Task;
+
+                    if (workerTask is not null)
                     {
-                        playerCards[i] = deck.Draw();
-                    }
-
-                    for (int i = 0; i < RoundEngine.FlopCardAmount; i++)
-                    {
-                        flopCards[i] = deck.Draw();
-                    }
-
-                    int roundWinnings = RoundEngine.EvaluateRound(playerCards, flopCards);
-
-                    bool shouldFold = RoundEngine.FoldWinnings > roundWinnings;
-
-                    if (shouldFold)
-                    {
-                        roundsFolded++;
-                        totalWinnings += RoundEngine.FoldWinnings;
-                    }
-                    else
-                    {
-                        totalWinnings += roundWinnings;
+                        tasks[i] = workerTask;
                     }
                 }
 
-                WriteStatus(roundAmount, roundsFolded, totalWinnings, DateTime.Now - startTime);
+                startTime = DateTime.Now;
+
+                for (int i = 0; i < workerCount; i++)
+                {
+                    workers[i].Start();
+                }
+
+                outputTask.Start();
+
+                Task.WaitAll(tasks);
+                cancellationTokenSource.Cancel();
+
+                OutputStatus(workers, DateTime.Now - startTime, true);
+            }
+        }
+
+        private static void OutputStatus(ExhaustiveWorker[] workers, TimeSpan elapsed, bool isFinished)
+        {
+            int normalRoundAmount = workers.Sum(c => c.NormalRounds.Count);
+            int normalRoundsEvaluated = workers.Sum(c => c.NormalRoundsEvaluated);
+            int roundsEvaluated = workers.Sum(c => c.RoundsEvaluated);
+            int roundsFolded = workers.Sum(c => c.RoundsFolded);
+            long winnings = workers.Sum(c => c.Winnings);
+
+            WriteStatus(normalRoundAmount, normalRoundsEvaluated, roundsEvaluated, roundsFolded,
+                winnings, elapsed);
+
+            if (isFinished)
+            {
+                Console.WriteLine($"Total winnings: {winnings}");
             }
         }
 
@@ -114,15 +158,19 @@ namespace CasinoHoldemSimulator
             return cards;
         }
 
-        private static void WriteStatus(int roundAmount, int roundsFolded, long totalWinnings, TimeSpan elapsed)
+        private static void WriteStatus(int normalRoundAmount, int normalRoundsEvaluated, int roundsEvaluated, int roundsFolded,
+            long winnings, TimeSpan elapsed)
         {
-            long iterationsDone = roundAmount * (long)RoundEngine.RoundIterationAmount;
-            double netCentWinningsPerIteration = totalWinnings / (double)iterationsDone * 100;
-            double roundsPerSecond = roundAmount / elapsed.TotalSeconds;
+            long iterationsDone = roundsEvaluated * (long)RoundEngine.RoundIterationAmount;
+            double netCentWinningsPerIteration = winnings / (double)iterationsDone * 100;
+            double roundsPerSecond = roundsEvaluated / elapsed.TotalSeconds;
+
+            double progressPercent = normalRoundsEvaluated / (double)normalRoundAmount * 100;
 
             Console.WriteLine($"Average of {netCentWinningsPerIteration:0.000}¢ winnings per iteration");
-            Console.WriteLine($"Folded {roundsFolded} of {roundAmount} rounds");
+            Console.WriteLine($"Folded {roundsFolded} of {roundsEvaluated} rounds");
             Console.WriteLine($"At {roundsPerSecond:0.00} rounds per second");
+            Console.WriteLine($"Progress at {normalRoundsEvaluated}/{normalRoundAmount} ({progressPercent:0.00}%)");
             Console.WriteLine();
         }
     }

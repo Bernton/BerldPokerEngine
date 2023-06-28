@@ -4,9 +4,10 @@ namespace BerldPokerEngine
 {
     public class EngineData
     {
+        public const int AllCardsAmount = 52;
+
         internal const int BoardCardAmount = 5;
         internal const int PlayerCardAmount = 2;
-        private const int AllCardsAmount = 52;
         private const int CardsToEvaluateAmount = 7;
 
         internal List<Card> BoardCards { get; }
