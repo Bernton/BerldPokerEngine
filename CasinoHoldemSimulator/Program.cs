@@ -8,6 +8,8 @@ namespace CasinoHoldemSimulator
     {
         private static void Main(string[] args)
         {
+            args = new string[] { "1" };
+
             if (args.Length == 1 && args.First().Length == 11)
             {
                 string input = args.First();
@@ -36,14 +38,18 @@ namespace CasinoHoldemSimulator
             }
             else
             {
-                int workerCount = Math.Max(1, Environment.ProcessorCount / 4);
+                int workerCount = 0;
 
-                if (args.Length == 1 && int.TryParse(args.First(), out int inputNumber))
+                if (args.Length == 0)
+                {
+                    workerCount = Math.Max(1, Environment.ProcessorCount / 4);
+                }
+                else if (args.Length == 1 && int.TryParse(args.First(), out int inputNumber))
                 {
                     workerCount = inputNumber;
                 }
 
-                if (args.Length != 0 || workerCount <= 0)
+                if (workerCount <= 0)
                 {
                     Console.Error.WriteLine("Invalid argument(s).");
                     Environment.Exit(1);
