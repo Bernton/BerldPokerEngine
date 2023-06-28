@@ -8,8 +8,6 @@ namespace CasinoHoldemSimulator
     {
         private static void Main(string[] args)
         {
-            args = new string[] { "1" };
-
             if (args.Length == 1 && args.First().Length == 11)
             {
                 string input = args.First();
