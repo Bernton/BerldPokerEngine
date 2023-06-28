@@ -14,9 +14,8 @@ namespace CasinoHoldemSimulator
 
         private const int Ante = 1;
         private const int ContinueBet = Ante * 2;
-        private const int LastHandRankIndex = 4;
-
         private const int HandValueCardAmount = 7;
+        private const int LastHandRankIndex = 4;
 
         internal static int EvaluateRound(List<Card> playerCards, List<Card> flopCards)
         {

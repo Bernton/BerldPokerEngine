@@ -121,8 +121,8 @@ namespace CasinoHoldemSimulator
             double roundsPerSecond = roundAmount / elapsed.TotalSeconds;
 
             Console.WriteLine($"Average of {netCentWinningsPerIteration:0.000}¢ winnings per iteration");
-            Console.WriteLine($"Folded {roundsFolded} of {roundAmount} rounds.");
-            Console.WriteLine($"At {roundsPerSecond:0.00} rounds per second.");
+            Console.WriteLine($"Folded {roundsFolded} of {roundAmount} rounds");
+            Console.WriteLine($"At {roundsPerSecond:0.00} rounds per second");
             Console.WriteLine();
         }
     }
