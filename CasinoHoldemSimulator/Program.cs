@@ -34,9 +34,19 @@ namespace CasinoHoldemSimulator
                 Console.WriteLine($"{action} [Average {signText} of {Math.Abs(evRatio):0.00} times the ante]");
                 Console.WriteLine();
             }
-            else if (args.Length == 0)
+            else
             {
-                int workerCount = 3;
+                int workerCount = Environment.ProcessorCount;
+
+                if (args.Length == 1 && int.TryParse(args.First(), out int inputNumber))
+                {
+                    workerCount = inputNumber;
+                }
+                else if (args.Length != 0)
+                {
+                    Console.Error.WriteLine("Invalid argument(s).");
+                    Environment.Exit(1);
+                }
 
                 List<NormalRound> allNormalRounds = RoundEngine.GetNormalRounds();
                 ExhaustiveWorker[] workers = new ExhaustiveWorker[workerCount];
