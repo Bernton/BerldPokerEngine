@@ -52,7 +52,7 @@ namespace BerldPokerEngine
                 int cardSuit = cards[i].Suit;
                 suitAmounts[cardSuit]++;
 
-                if (suitAmounts[cardSuit] == 5)
+                if (suitAmounts[cardSuit] == HandValue.Amount)
                 {
                     flushSuit = cardSuit;
                     break;
@@ -85,17 +85,17 @@ namespace BerldPokerEngine
 
                     consecutiveFlushAmount++;
 
-                    if (consecutiveFlushAmount == 5)
+                    if (consecutiveFlushAmount == HandValue.Amount)
                     {
                         value.Hand = i == Rank.Ten ? Hand.RoyalFlush : Hand.StraightFlush;
-                        value.Ranks[4] = i + 4;
+                        value.Ranks[HandValue.HandRankIndex] = i + 4;
                         value.Ranks[3] = -1;
                         return;
                     }
                     else if (consecutiveFlushAmount == 4 && i == Rank.Deuce && coveredFlushRanks[Rank.Ace])
                     {
                         value.Hand = Hand.StraightFlush;
-                        value.Ranks[4] = Rank.Five;
+                        value.Ranks[HandValue.HandRankIndex] = Rank.Five;
                         value.Ranks[3] = -1;
                         return;
                     }
@@ -119,7 +119,7 @@ namespace BerldPokerEngine
                         if (rankAmounts[j] > 0 && j != i)
                         {
                             value.Hand = Hand.FourOfAKind;
-                            value.Ranks[4] = i;
+                            value.Ranks[HandValue.HandRankIndex] = i;
                             value.Ranks[3] = j;
                             value.Ranks[2] = -1;
                             return;
@@ -147,7 +147,7 @@ namespace BerldPokerEngine
                     if (rankAmounts[i] >= 2 && i != threeOfAKindRank.Value)
                     {
                         value.Hand = Hand.FullHouse;
-                        value.Ranks[4] = threeOfAKindRank.Value;
+                        value.Ranks[HandValue.HandRankIndex] = threeOfAKindRank.Value;
                         value.Ranks[3] = i;
                         value.Ranks[2] = -1;
                         return;
@@ -191,17 +191,17 @@ namespace BerldPokerEngine
 
                 consecutiveAmount++;
 
-                if (consecutiveAmount == 5)
+                if (consecutiveAmount == HandValue.Amount)
                 {
                     value.Hand = Hand.Straight;
-                    value.Ranks[4] = i + 4;
+                    value.Ranks[HandValue.HandRankIndex] = i + 4;
                     value.Ranks[3] = -1;
                     return;
                 }
                 else if (consecutiveAmount == 4 && i == Rank.Deuce && rankAmounts[Rank.Ace] > 0)
                 {
                     value.Hand = Hand.Straight;
-                    value.Ranks[4] = Rank.Five;
+                    value.Ranks[HandValue.HandRankIndex] = Rank.Five;
                     value.Ranks[3] = -1;
                     return;
                 }
@@ -211,7 +211,7 @@ namespace BerldPokerEngine
             if (threeOfAKindRank.HasValue)
             {
                 value.Hand = Hand.ThreeOfAKind;
-                value.Ranks[4] = threeOfAKindRank.Value;
+                value.Ranks[HandValue.HandRankIndex] = threeOfAKindRank.Value;
                 value.Ranks[1] = -1;
 
                 int ranksIndex = 3;
@@ -265,7 +265,7 @@ namespace BerldPokerEngine
                         if (rankAmounts[i] > 0 && i != highestPairRank.Value && i != secondPairRank.Value)
                         {
                             value.Hand = Hand.TwoPair;
-                            value.Ranks[4] = highestPairRank.Value;
+                            value.Ranks[HandValue.HandRankIndex] = highestPairRank.Value;
                             value.Ranks[3] = secondPairRank.Value;
                             value.Ranks[2] = i;
                             value.Ranks[1] = -1;
@@ -279,7 +279,7 @@ namespace BerldPokerEngine
             if (highestPairRank.HasValue)
             {
                 value.Hand = Hand.Pair;
-                value.Ranks[4] = highestPairRank.Value;
+                value.Ranks[HandValue.HandRankIndex] = highestPairRank.Value;
                 value.Ranks[0] = -1;
 
                 int ranksIndex = 3;

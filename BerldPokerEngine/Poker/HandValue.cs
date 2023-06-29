@@ -2,13 +2,16 @@
 {
     public class HandValue : IComparable<HandValue>
     {
+        public const int Amount = 5;
+        public const int HandRankIndex = Amount - 1;
+
         public int Hand { get; set; }
         public int[] Ranks { get; }
 
         public HandValue()
         {
             Hand = default;
-            Ranks = new int[5];
+            Ranks = new int[Amount];
         }
 
         public int CompareTo(HandValue? other)
