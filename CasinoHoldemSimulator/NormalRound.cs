@@ -6,7 +6,8 @@ namespace CasinoHoldemSimulator
 {
     internal class NormalRound
     {
-        private const int CardAmount = 5;
+        private const int CardAmount = RoundEngine.PlayerCardAmount + RoundEngine.FlopCardAmount;
+
         internal List<Card> PlayerCards { get; private set; }
         internal List<Card> FlopCards { get; private set; }
         internal string Key { get; private set; }
