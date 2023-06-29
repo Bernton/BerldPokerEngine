@@ -85,18 +85,18 @@ namespace CasinoHoldemSimulator
 
                 DateTime startTime = default;
 
-                CancellationTokenSource cancellationTokenSource = new();
+                CancellationTokenSource outputTokenSource = new();
                 Task outputTask = new(async () =>
                 {
-                    while (!cancellationTokenSource.IsCancellationRequested)
+                    while (!outputTokenSource.IsCancellationRequested)
                     {
                         await Task.Delay(10_000);
-                        if (cancellationTokenSource.IsCancellationRequested) return;
+                        if (outputTokenSource.IsCancellationRequested) return;
                         OutputStatus(workers, DateTime.Now - startTime, false);
                     }
-                }, cancellationTokenSource.Token);
+                }, outputTokenSource.Token);
 
-                Task[] tasks = new Task[workerCount];
+                Task[] workerTasks = new Task[workerCount];
 
                 for (int i = 0; i < workerCount; i++)
                 {
@@ -104,7 +104,7 @@ namespace CasinoHoldemSimulator
 
                     if (workerTask is not null)
                     {
-                        tasks[i] = workerTask;
+                        workerTasks[i] = workerTask;
                     }
                 }
 
@@ -117,8 +117,8 @@ namespace CasinoHoldemSimulator
 
                 outputTask.Start();
 
-                Task.WaitAll(tasks);
-                cancellationTokenSource.Cancel();
+                Task.WaitAll(workerTasks);
+                outputTokenSource.Cancel();
 
                 OutputStatus(workers, DateTime.Now - startTime, true);
             }
