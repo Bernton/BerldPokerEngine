@@ -18,7 +18,7 @@ namespace CasinoHoldemSimulator
 
                 if (allCards.Distinct().Count() != allCards.Count())
                 {
-                    Console.Error.WriteLine("Duplicate card input.");
+                    Console.Error.WriteLine("Duplicate card input");
                     Environment.Exit(1);
                 }
 
@@ -34,31 +34,34 @@ namespace CasinoHoldemSimulator
             }
             else
             {
-                int workerCount = 0;
+                int workerAmount = 0;
 
                 if (args.Length == 0)
                 {
-                    workerCount = Math.Max(1, Environment.ProcessorCount / 4);
+                    workerAmount = Math.Max(1, Environment.ProcessorCount / 4);
                 }
                 else if (args.Length == 1 && int.TryParse(args.First(), out int inputNumber))
                 {
-                    workerCount = inputNumber;
+                    workerAmount = inputNumber;
                 }
 
-                if (workerCount <= 0)
+                if (workerAmount <= 0)
                 {
-                    Console.Error.WriteLine("Invalid argument(s).");
+                    Console.Error.WriteLine("Invalid argument(s)");
                     Environment.Exit(1);
                 }
 
-                List<NormalRound> allNormalRounds = RoundEngine.GetNormalRounds();
-                ExhaustiveWorker[] workers = new ExhaustiveWorker[workerCount];
-                int lastWorkerI = workerCount - 1;
+                Console.WriteLine($"Using {workerAmount} workers");
+                Console.WriteLine("Calculating normalized rounds");
 
-                int normalRoundsPerWorker = allNormalRounds.Count / workerCount;
+                List<NormalRound> allNormalRounds = RoundEngine.GetNormalRounds();
+                ExhaustiveWorker[] workers = new ExhaustiveWorker[workerAmount];
+                int lastWorkerI = workerAmount - 1;
+
+                int normalRoundsPerWorker = allNormalRounds.Count / workerAmount;
                 int normalRoundsAssigned = 0;
 
-                for (int i = 0; i < workerCount; i++)
+                for (int i = 0; i < workerAmount; i++)
                 {
                     bool isLastWorker = i == lastWorkerI;
 
@@ -76,7 +79,7 @@ namespace CasinoHoldemSimulator
                     };
                 }
 
-                for (int i = 0; i < workerCount; i++)
+                for (int i = 0; i < workerAmount; i++)
                 {
                     workers[i].Prepare();
                 }
@@ -94,9 +97,9 @@ namespace CasinoHoldemSimulator
                     }
                 }, outputTokenSource.Token);
 
-                Task[] workerTasks = new Task[workerCount];
+                Task[] workerTasks = new Task[workerAmount];
 
-                for (int i = 0; i < workerCount; i++)
+                for (int i = 0; i < workerAmount; i++)
                 {
                     Task? workerTask = workers[i].Task;
 
@@ -106,9 +109,12 @@ namespace CasinoHoldemSimulator
                     }
                 }
 
+                Console.WriteLine($"Start evaluating with all {workerAmount} workers");
+                Console.WriteLine();
+
                 startTime = DateTime.Now;
 
-                for (int i = 0; i < workerCount; i++)
+                for (int i = 0; i < workerAmount; i++)
                 {
                     workers[i].Start();
                 }
@@ -163,7 +169,7 @@ namespace CasinoHoldemSimulator
                 }
                 else
                 {
-                    Console.Error.WriteLine("Invalid card input.");
+                    Console.Error.WriteLine("Invalid card input");
                     Environment.Exit(1);
                 }
             }
