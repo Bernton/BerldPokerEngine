@@ -6,6 +6,11 @@ namespace CasinoHoldemSimulator
     {
         private static void Main(string[] args)
         {
+            string[] extendedArgs = args.Where(c => c == "-e" || c == "--Extended").ToArray();
+            bool isExtended = extendedArgs.Any();
+
+            args = args.Except(extendedArgs).ToArray();
+
             if (args.Length == 1 && args.First().Length == 11)
             {
                 string input = args.First();
@@ -22,16 +27,33 @@ namespace CasinoHoldemSimulator
                     Environment.Exit(1);
                 }
 
-                long[] winnings = new long[WinningKind.Amount];
-                int totalWinnings = RoundEngine.EvaluateRound(playerCards, flopCards, winnings);
+                int[] winningsByKind = RoundEngine.EvaluateRound(playerCards, flopCards);
+                int winnings = winningsByKind.Sum();
 
-                bool shouldFold = totalWinnings == RoundEngine.FoldWinnings;
+                bool shouldFold = RoundEngine.FoldWinnings > winnings;
                 string action = shouldFold ? "Fold" : "Continue";
-                double evRatio = totalWinnings / (double)RoundEngine.RoundIterationAmount;
+                double evRatio = winnings / (double)RoundEngine.RoundIterationAmount;
                 string signText = evRatio > 0 ? "win" : "loss";
 
                 Console.WriteLine($"{action} [Average {signText} of {Math.Abs(evRatio):0.00} times the ante]");
                 Console.WriteLine();
+
+                if (isExtended)
+                {
+                    for (int i = 0; i < WinningKind.Amount; i++)
+                    {
+                        string caption = WinningKind.ToString(i);
+                        string padding = WinningKind.GetPadding(i);
+                        int winningByKind = winningsByKind[i];
+
+                        Console.WriteLine($"{caption}:{padding}{winningByKind,17}");
+                    }
+
+                    Console.WriteLine("=========================================");
+                    Console.WriteLine($"Net total on continue:\t{winnings,17}");
+                    Console.WriteLine($"Fold:\t\t\t{RoundEngine.FoldWinnings,17}");
+                    Console.WriteLine();
+                }
             }
             else
             {

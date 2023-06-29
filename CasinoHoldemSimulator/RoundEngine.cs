@@ -75,18 +75,21 @@ namespace CasinoHoldemSimulator
 
                                 if (comparison > 0)
                                 {
-                                    winnings[WinningKind.Win] += ContinueBet;
-                                    winnings[WinningKind.Win] += Ante * GetAnteMultiplier(playerValue);
+                                    winnings[WinningKind.WinContinueBet] += ContinueBet;
+
+                                    int winningKind = GetWinningKind(playerValue);
+                                    winnings[winningKind] += Ante * GetAnteMultiplier(playerValue);
                                 }
                                 else if (comparison < 0)
                                 {
-                                    winnings[WinningKind.Loss] -= ContinueBet;
-                                    winnings[WinningKind.Loss] -= Ante;
+                                    winnings[WinningKind.LossContinue] -= ContinueBet;
+                                    winnings[WinningKind.LossContinue] -= Ante;
                                 }
                             }
                             else
                             {
-                                winnings[WinningKind.DealerNotQualify] += Ante * GetAnteMultiplier(playerValue);
+                                int winningKind = GetWinningKind(playerValue);
+                                winnings[winningKind] += Ante * GetAnteMultiplier(playerValue);
                             }
                         }
                     }
@@ -134,6 +137,19 @@ namespace CasinoHoldemSimulator
             }
 
             return normalRoundMap.Values.ToList();
+        }
+
+        private static int GetWinningKind(HandValue value)
+        {
+            return value.Hand switch
+            {
+                Hand.RoyalFlush => WinningKind.WinAnteRoyalFlush,
+                Hand.StraightFlush => WinningKind.WinAnteStraightFlush,
+                Hand.FourOfAKind => WinningKind.WinAnteFourOfAKind,
+                Hand.FullHouse => WinningKind.WinAnteFullHouse,
+                Hand.Flush => WinningKind.WinAnteFlush,
+                _ => WinningKind.WinAnteDefault
+            };
         }
 
         private static int GetAnteMultiplier(HandValue value)

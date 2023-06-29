@@ -5,9 +5,8 @@
         internal List<NormalRound> NormalRounds { get; set; } = new();
 
         internal long[] ContinueWinnings { get; private set; } = new long[WinningKind.Amount];
-        internal long FoldWinnings { get; private set; }
 
-        internal int[] RoundsContinued { get; private set; } = new int[WinningKind.Amount];
+        internal long FoldWinnings { get; private set; }
         internal int RoundsFolded { get; private set; }
 
         internal int NormalRoundsEvaluated { get; private set; }
@@ -24,8 +23,9 @@
 
             NormalRoundsEvaluated = 0;
             RoundsEvaluated = 0;
-            RoundsFolded = 0;
             ContinueWinnings = new long[WinningKind.Amount];
+            FoldWinnings = 0;
+            RoundsFolded = 0;
 
             Task = new Task(EvaluateRounds, _cancellationTokenSource.Token);
         }
@@ -59,7 +59,6 @@
                 {
                     for (int kindI = 0; kindI < WinningKind.Amount; kindI++)
                     {
-                        RoundsContinued[kindI] += round.Frequency;
                         ContinueWinnings[kindI] += winningsByKind[kindI] * round.Frequency;
                     }
                 }
