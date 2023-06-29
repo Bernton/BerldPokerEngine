@@ -2,18 +2,18 @@
 {
     internal class ExhaustiveWorker
     {
-        public List<NormalRound> NormalRounds { get; set; } = new();
+        internal List<NormalRound> NormalRounds { get; set; } = new();
 
-        public int NormalRoundsEvaluated { get; private set; }
-        public int RoundsEvaluated { get; private set; }
-        public int RoundsFolded { get; private set; }
-        public long Winnings { get; private set; }
+        internal int NormalRoundsEvaluated { get; private set; }
+        internal int RoundsEvaluated { get; private set; }
+        internal int RoundsFolded { get; private set; }
+        internal long Winnings { get; private set; }
 
-        public Task? Task { get; private set; }
+        internal Task? Task { get; private set; }
 
         private CancellationTokenSource? _cancellationTokenSource;
 
-        public void Prepare()
+        internal void Prepare()
         {
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource = new();
@@ -26,7 +26,7 @@
             Task = new Task(EvaluateRounds, _cancellationTokenSource.Token);
         }
 
-        public void Start()
+        internal void Start()
         {
             Task?.Start();
         }

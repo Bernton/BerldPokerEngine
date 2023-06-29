@@ -6,13 +6,13 @@ namespace CasinoHoldemSimulator
 {
     internal class NormalRound
     {
-        public List<Card> PlayerCards { get; private set; }
-        public List<Card> FlopCards { get; private set; }
-        public List<Card> Cards { get; private set; }
-        public string Key { get; private set; }
-        public int Frequency { get; set; }
+        internal List<Card> PlayerCards { get; private set; }
+        internal List<Card> FlopCards { get; private set; }
+        internal List<Card> Cards { get; private set; }
+        internal string Key { get; private set; }
+        internal int Frequency { get; set; }
 
-        public NormalRound(int p1, int p2, int b1, int b2, int b3)
+        internal NormalRound(int p1, int p2, int b1, int b2, int b3)
         {
             Frequency = 1;
             List<Card> playerCards = GetPlayerCards(p1, p2);
