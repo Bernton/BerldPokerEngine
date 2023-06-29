@@ -4,10 +4,12 @@ namespace CasinoHoldemSimulator
 {
     internal class Program
     {
+        private static bool _isExtended = false;
+
         private static void Main(string[] args)
         {
             string[] extendedArgs = args.Where(c => c == "-e" || c == "--Extended").ToArray();
-            bool isExtended = extendedArgs.Any();
+            _isExtended = extendedArgs.Any();
 
             args = args.Except(extendedArgs).ToArray();
 
@@ -38,7 +40,7 @@ namespace CasinoHoldemSimulator
                 Console.WriteLine($"{action} [Average {signText} of {Math.Abs(evRatio):0.00} times the ante]");
                 Console.WriteLine();
 
-                if (isExtended)
+                if (_isExtended)
                 {
                     for (int i = 0; i < WinningKind.Amount; i++)
                     {
@@ -157,14 +159,31 @@ namespace CasinoHoldemSimulator
             int normalRoundsEvaluated = workers.Sum(c => c.NormalRoundsEvaluated);
             int roundsEvaluated = workers.Sum(c => c.RoundsEvaluated);
             int roundsFolded = workers.Sum(c => c.RoundsFolded);
-            long winnings = workers.Sum(c => c.ContinueWinnings.Sum());
+
+            long totalWinnings =
+                workers.Sum(c => c.ContinueWinnings.Sum()) +
+                workers.Sum(c => c.FoldWinnings);
 
             WriteStatus(normalRoundAmount, normalRoundsEvaluated, roundsEvaluated, roundsFolded,
-                winnings, elapsed);
+                totalWinnings, elapsed);
 
             if (isFinished)
             {
-                Console.WriteLine($"Total winnings: {winnings}");
+                if (_isExtended)
+                {
+                    for (int i = 0; i < WinningKind.Amount; i++)
+                    {
+                        string caption = WinningKind.ToString(i);
+                        long kindWinnings = workers.Sum(c => c.ContinueWinnings[i]);
+
+                        Console.WriteLine($"{caption}: {kindWinnings}");
+                    }
+
+                    long foldWinnings = workers.Sum(c => c.FoldWinnings);
+                    Console.WriteLine($"Fold: {foldWinnings}");
+                }
+
+                Console.WriteLine($"Total winnings: {totalWinnings}");
             }
         }
 
