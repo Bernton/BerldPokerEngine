@@ -16,7 +16,7 @@ namespace CasinoHoldemSimulator
         private const int ContinueBet = Ante * 2;
         private const int HandValueCardAmount = 7;
 
-        internal static int EvaluateRound(List<Card> playerCards, List<Card> flopCards)
+        internal static int[] EvaluateRound(List<Card> playerCards, List<Card> flopCards)
         {
             Debug.Assert(playerCards.Count == PlayerCardAmount);
             Debug.Assert(flopCards.Count == FlopCardAmount);
@@ -39,7 +39,7 @@ namespace CasinoHoldemSimulator
                 dealerAllCards[PlayerCardAmount + i] = flopCards[i];
             }
 
-            int roundWinnings = 0;
+            int[] winnings = new int[WinningKind.Amount];
 
             for (int b4 = 0; b4 < aliveCards.Length; b4++)
             {
@@ -75,25 +75,25 @@ namespace CasinoHoldemSimulator
 
                                 if (comparison > 0)
                                 {
-                                    roundWinnings += ContinueBet;
-                                    roundWinnings += Ante * GetAnteMultiplier(playerValue);
+                                    winnings[WinningKind.Win] += ContinueBet;
+                                    winnings[WinningKind.Win] += Ante * GetAnteMultiplier(playerValue);
                                 }
                                 else if (comparison < 0)
                                 {
-                                    roundWinnings -= ContinueBet;
-                                    roundWinnings -= Ante;
+                                    winnings[WinningKind.Loss] -= ContinueBet;
+                                    winnings[WinningKind.Loss] -= Ante;
                                 }
                             }
                             else
                             {
-                                roundWinnings += Ante * GetAnteMultiplier(playerValue);
+                                winnings[WinningKind.DealerNotQualify] += Ante * GetAnteMultiplier(playerValue);
                             }
                         }
                     }
                 }
             }
 
-            return roundWinnings;
+            return winnings;
         }
 
         internal static List<NormalRound> GetNormalRounds()

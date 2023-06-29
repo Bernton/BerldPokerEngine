@@ -4,10 +4,14 @@
     {
         internal List<NormalRound> NormalRounds { get; set; } = new();
 
+        internal long[] ContinueWinnings { get; private set; } = new long[WinningKind.Amount];
+        internal long FoldWinnings { get; private set; }
+
+        internal int[] RoundsContinued { get; private set; } = new int[WinningKind.Amount];
+        internal int RoundsFolded { get; private set; }
+
         internal int NormalRoundsEvaluated { get; private set; }
         internal int RoundsEvaluated { get; private set; }
-        internal int RoundsFolded { get; private set; }
-        internal long Winnings { get; private set; }
 
         internal Task? Task { get; private set; }
 
@@ -21,7 +25,7 @@
             NormalRoundsEvaluated = 0;
             RoundsEvaluated = 0;
             RoundsFolded = 0;
-            Winnings = 0;
+            ContinueWinnings = new long[WinningKind.Amount];
 
             Task = new Task(EvaluateRounds, _cancellationTokenSource.Token);
         }
@@ -41,18 +45,23 @@
 
                 NormalRound round = NormalRounds[i];
 
-                int roundWinnings = RoundEngine.EvaluateRound(round.PlayerCards, round.FlopCards);
+                int[] winningsByKind = RoundEngine.EvaluateRound(round.PlayerCards, round.FlopCards);
+                int winnings = winningsByKind.Sum();
 
-                bool shouldFold = RoundEngine.FoldWinnings > roundWinnings;
+                bool shouldFold = RoundEngine.FoldWinnings > winnings;
 
                 if (shouldFold)
                 {
                     RoundsFolded += round.Frequency;
-                    Winnings += RoundEngine.FoldWinnings * round.Frequency;
+                    FoldWinnings -= RoundEngine.FoldWinnings * round.Frequency;
                 }
                 else
                 {
-                    Winnings += roundWinnings * round.Frequency;
+                    for (int kindI = 0; kindI < WinningKind.Amount; kindI++)
+                    {
+                        RoundsContinued[kindI] += round.Frequency;
+                        ContinueWinnings[kindI] += winningsByKind[kindI] * round.Frequency;
+                    }
                 }
 
                 RoundsEvaluated += round.Frequency;

@@ -22,11 +22,12 @@ namespace CasinoHoldemSimulator
                     Environment.Exit(1);
                 }
 
-                int roundWinnings = RoundEngine.EvaluateRound(playerCards, flopCards);
+                long[] winnings = new long[WinningKind.Amount];
+                int totalWinnings = RoundEngine.EvaluateRound(playerCards, flopCards, winnings);
 
-                bool shouldFold = RoundEngine.FoldWinnings > roundWinnings;
+                bool shouldFold = totalWinnings == RoundEngine.FoldWinnings;
                 string action = shouldFold ? "Fold" : "Continue";
-                double evRatio = roundWinnings / (double)RoundEngine.RoundIterationAmount;
+                double evRatio = totalWinnings / (double)RoundEngine.RoundIterationAmount;
                 string signText = evRatio > 0 ? "win" : "loss";
 
                 Console.WriteLine($"{action} [Average {signText} of {Math.Abs(evRatio):0.00} times the ante]");
@@ -134,7 +135,7 @@ namespace CasinoHoldemSimulator
             int normalRoundsEvaluated = workers.Sum(c => c.NormalRoundsEvaluated);
             int roundsEvaluated = workers.Sum(c => c.RoundsEvaluated);
             int roundsFolded = workers.Sum(c => c.RoundsFolded);
-            long winnings = workers.Sum(c => c.Winnings);
+            long winnings = workers.Sum(c => c.ContinueWinnings.Sum());
 
             WriteStatus(normalRoundAmount, normalRoundsEvaluated, roundsEvaluated, roundsFolded,
                 winnings, elapsed);
