@@ -12,11 +12,11 @@ namespace CasinoHoldemSimulator
         internal string Key { get; private set; }
         internal int Frequency { get; set; }
 
-        internal NormalRound(int p1, int p2, int b1, int b2, int b3)
+        internal NormalRound(int p1, int p2, int f1, int f2, int f3)
         {
             Frequency = 1;
             List<Card> playerCards = GetPlayerCards(p1, p2);
-            List<Card> flopCards = GetFlopCards(b1, b2, b3);
+            List<Card> flopCards = GetFlopCards(f1, f2, f3);
 
             // Normalize
             playerCards = playerCards.OrderBy(c => c.Index).ToList();
@@ -82,13 +82,13 @@ namespace CasinoHoldemSimulator
             };
         }
 
-        private static List<Card> GetFlopCards(int b1, int b2, int b3)
+        private static List<Card> GetFlopCards(int f1, int f2, int f3)
         {
             return new()
             {
-                Card.Create(b1),
-                Card.Create(b2),
-                Card.Create(b3)
+                Card.Create(f1),
+                Card.Create(f2),
+                Card.Create(f3)
             };
         }
 

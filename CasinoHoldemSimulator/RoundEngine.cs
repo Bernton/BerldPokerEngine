@@ -106,19 +106,19 @@ namespace CasinoHoldemSimulator
             {
                 for (int p2 = p1 + 1; p2 < bound; p2++)
                 {
-                    for (int b1 = 0; b1 < bound; b1++)
+                    for (int f1 = 0; f1 < bound; f1++)
                     {
-                        if (b1 == p1 || b1 == p2) continue;
+                        if (f1 == p1 || f1 == p2) continue;
 
-                        for (int b2 = b1 + 1; b2 < bound; b2++)
+                        for (int f2 = f1 + 1; f2 < bound; f2++)
                         {
-                            if (b2 == p1 || b2 == p2) continue;
+                            if (f2 == p1 || f2 == p2) continue;
 
-                            for (int b3 = b2 + 1; b3 < bound; b3++)
+                            for (int f3 = f2 + 1; f3 < bound; f3++)
                             {
-                                if (b3 == p1 || b3 == p2) continue;
+                                if (f3 == p1 || f3 == p2) continue;
 
-                                NormalRound round = new(p1, p2, b1, b2, b3);
+                                NormalRound round = new(p1, p2, f1, f2, f3);
 
                                 if (normalRoundMap.ContainsKey(round.Key))
                                 {
