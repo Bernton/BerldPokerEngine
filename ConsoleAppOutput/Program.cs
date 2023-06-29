@@ -1,6 +1,5 @@
 ﻿using BerldPokerEngine;
 using BerldPokerEngine.Poker;
-using System.Text;
 
 namespace ConsoleAppOutput
 {

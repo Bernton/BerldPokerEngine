@@ -1,6 +1,4 @@
 ﻿using BerldPokerEngine.Poker;
-using System;
-using System.Diagnostics;
 
 namespace CasinoHoldemSimulator
 {

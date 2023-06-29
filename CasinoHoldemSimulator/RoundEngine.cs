@@ -1,5 +1,5 @@
-﻿using BerldPokerEngine.Poker;
-using BerldPokerEngine;
+﻿using BerldPokerEngine;
+using BerldPokerEngine.Poker;
 using System.Diagnostics;
 
 namespace CasinoHoldemSimulator
