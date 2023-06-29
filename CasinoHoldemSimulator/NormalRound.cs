@@ -6,23 +6,17 @@ namespace CasinoHoldemSimulator
 {
     internal class NormalRound
     {
+        private const int CardAmount = 5;
         internal List<Card> PlayerCards { get; private set; }
         internal List<Card> FlopCards { get; private set; }
-        internal List<Card> Cards { get; private set; }
         internal string Key { get; private set; }
-        internal int Frequency { get; set; }
+        internal int Frequency { get; set; } = 1;
 
         internal NormalRound(int p1, int p2, int f1, int f2, int f3)
         {
-            Frequency = 1;
-            List<Card> playerCards = GetPlayerCards(p1, p2);
-            List<Card> flopCards = GetFlopCards(f1, f2, f3);
-
             // Normalize
-            playerCards = playerCards.OrderBy(c => c.Index).ToList();
-            flopCards = flopCards.OrderBy(c => c.Index).ToList();
-            List<Card> cards = Enumerable.Concat(playerCards, flopCards).ToList();
-            Card?[] normalCards = new Card?[cards.Count];
+            List<Card> cards = GetCards(p1, p2, f1, f2, f3);
+            Card?[] normalCards = new Card?[CardAmount];
 
             int currentSuit = Suit.Clubs;
 
@@ -46,7 +40,7 @@ namespace CasinoHoldemSimulator
                 currentSuit++;
             }
 
-            List<Card> normalPlayerCards = new();
+            List<Card> normalPlayerCards = new(RoundEngine.PlayerCardAmount);
 
             for (int i = 0; i < RoundEngine.PlayerCardAmount; i++)
             {
@@ -55,7 +49,7 @@ namespace CasinoHoldemSimulator
                 normalPlayerCards.Add(normalCard.Value);
             }
 
-            List<Card> normalFlopCards = new();
+            List<Card> normalFlopCards = new(RoundEngine.FlopCardAmount);
 
             for (int i = 0; i < RoundEngine.FlopCardAmount; i++)
             {
@@ -64,28 +58,20 @@ namespace CasinoHoldemSimulator
                 normalFlopCards.Add(normalCard.Value);
             }
 
-            normalPlayerCards = normalPlayerCards.OrderBy(c => c.Index).ToList();
-            normalFlopCards = normalFlopCards.OrderBy(c => c.Index).ToList();
+            normalPlayerCards.Sort();
+            normalFlopCards.Sort();
 
             PlayerCards = normalPlayerCards;
             FlopCards = normalFlopCards;
-            Cards = Enumerable.Concat(PlayerCards, FlopCards).ToList();
             Key = GetKey();
         }
 
-        private static List<Card> GetPlayerCards(int p1, int p2)
+        private static List<Card> GetCards(int p1, int p2, int f1, int f2, int f3)
         {
-            return new()
+            return new(CardAmount)
             {
                 Card.Create(p1),
-                Card.Create(p2)
-            };
-        }
-
-        private static List<Card> GetFlopCards(int f1, int f2, int f3)
-        {
-            return new()
-            {
+                Card.Create(p2),
                 Card.Create(f1),
                 Card.Create(f2),
                 Card.Create(f3)
@@ -96,7 +82,12 @@ namespace CasinoHoldemSimulator
         {
             StringBuilder builder = new();
 
-            foreach (Card card in Cards)
+            foreach (Card card in PlayerCards)
+            {
+                builder.Append(card.ToString());
+            }
+
+            foreach (Card card in FlopCards)
             {
                 builder.Append(card.ToString());
             }

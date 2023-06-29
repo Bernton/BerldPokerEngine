@@ -1,6 +1,6 @@
 ﻿namespace BerldPokerEngine.Poker
 {
-    public readonly struct Card
+    public readonly struct Card : IComparable<Card>
     {
         public int Rank { get; }
         public int Suit { get; }
@@ -46,6 +46,11 @@
         }
 
         public override string ToString() => $"{Poker.Rank.ToChar(Rank)}{Poker.Suit.ToChar(Suit)}";
+
+        public int CompareTo(Card other)
+        {
+            return Index - other.Index;
+        }
 
         public static Card Card2c => new(Poker.Rank.Deuce, Poker.Suit.Clubs);
         public static Card Card2d => new(Poker.Rank.Deuce, Poker.Suit.Diamonds);
