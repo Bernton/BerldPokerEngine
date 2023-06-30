@@ -4,8 +4,15 @@ namespace CasinoHoldemSimulator
 {
     internal class Program
     {
+        private static bool _isExtended = false;
+
         private static void Main(string[] args)
         {
+            string[] extendedArgs = args.Where(c => c == "-e" || c == "--Extended").ToArray();
+            _isExtended = extendedArgs.Any();
+
+            args = args.Except(extendedArgs).ToArray();
+
             if (args.Length == 1 && args.First().Length == 11)
             {
                 string input = args.First();
@@ -22,15 +29,33 @@ namespace CasinoHoldemSimulator
                     Environment.Exit(1);
                 }
 
-                int roundWinnings = RoundEngine.EvaluateRound(playerCards, flopCards);
+                int[] winningsByKind = RoundEngine.EvaluateRound(playerCards, flopCards);
+                int winnings = winningsByKind.Sum();
 
-                bool shouldFold = RoundEngine.FoldWinnings > roundWinnings;
+                bool shouldFold = RoundEngine.FoldWinnings > winnings;
                 string action = shouldFold ? "Fold" : "Continue";
-                double evRatio = roundWinnings / (double)RoundEngine.RoundIterationAmount;
+                double evRatio = winnings / (double)RoundEngine.RoundIterationAmount;
                 string signText = evRatio > 0 ? "win" : "loss";
 
                 Console.WriteLine($"{action} [Average {signText} of {Math.Abs(evRatio):0.00} times the ante]");
                 Console.WriteLine();
+
+                if (_isExtended)
+                {
+                    for (int i = 0; i < WinningKind.Amount; i++)
+                    {
+                        string caption = WinningKind.ToString(i);
+                        string padding = WinningKind.GetPadding(i);
+                        int winningByKind = winningsByKind[i];
+
+                        Console.WriteLine($"{caption}:{padding}{winningByKind,17}");
+                    }
+
+                    Console.WriteLine("=========================================");
+                    Console.WriteLine($"Net total on continue:\t{winnings,17}");
+                    Console.WriteLine($"Fold:\t\t\t{RoundEngine.FoldWinnings,17}");
+                    Console.WriteLine();
+                }
             }
             else
             {
@@ -134,14 +159,31 @@ namespace CasinoHoldemSimulator
             int normalRoundsEvaluated = workers.Sum(c => c.NormalRoundsEvaluated);
             int roundsEvaluated = workers.Sum(c => c.RoundsEvaluated);
             int roundsFolded = workers.Sum(c => c.RoundsFolded);
-            long winnings = workers.Sum(c => c.Winnings);
+
+            long totalWinnings =
+                workers.Sum(c => c.ContinueWinnings.Sum()) +
+                workers.Sum(c => c.FoldWinnings);
 
             WriteStatus(normalRoundAmount, normalRoundsEvaluated, roundsEvaluated, roundsFolded,
-                winnings, elapsed);
+                totalWinnings, elapsed);
 
             if (isFinished)
             {
-                Console.WriteLine($"Total winnings: {winnings}");
+                if (_isExtended)
+                {
+                    for (int i = 0; i < WinningKind.Amount; i++)
+                    {
+                        string caption = WinningKind.ToString(i);
+                        long kindWinnings = workers.Sum(c => c.ContinueWinnings[i]);
+
+                        Console.WriteLine($"{caption}: {kindWinnings}");
+                    }
+
+                    long foldWinnings = workers.Sum(c => c.FoldWinnings);
+                    Console.WriteLine($"Fold: {foldWinnings}");
+                }
+
+                Console.WriteLine($"Total winnings: {totalWinnings}");
             }
         }
 
@@ -194,3 +236,14 @@ namespace CasinoHoldemSimulator
         }
     }
 }
+
+//Straight or less: 11948046235720
+//Flush: 1348029912024
+//Full house: 1842320143476
+//Four of a kind: 423293958720
+//Straight flush: 141815902240
+//Royal flush: 85615200000
+//Win on continue: 15138927503376
+//Loss on continue: -26519105266836
+//Fold: -5009067102600
+//Total winnings: 9418010691320
