@@ -236,3 +236,14 @@ namespace CasinoHoldemSimulator
         }
     }
 }
+
+//Straight or less: 11948046235720
+//Flush: 1348029912024
+//Full house: 1842320143476
+//Four of a kind: 423293958720
+//Straight flush: 141815902240
+//Royal flush: 85615200000
+//Win on continue: 15138927503376
+//Loss on continue: -26519105266836
+//Fold: -5009067102600
+//Total winnings: 9418010691320
