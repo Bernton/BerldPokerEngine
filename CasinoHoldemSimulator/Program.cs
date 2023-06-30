@@ -178,7 +178,7 @@ namespace CasinoHoldemSimulator
                 // Win on continue: 15138927503376
                 // Loss on continue: -26519105266836
                 // Fold: -5009067102600
-                // Total winnings: 9418010691320
+                // Total winnings: -600123513880
 
                 if (_isExtended)
                 {
