@@ -53,7 +53,7 @@
                 if (shouldFold)
                 {
                     RoundsFolded += round.Frequency;
-                    FoldWinnings -= RoundEngine.FoldWinnings * round.Frequency;
+                    FoldWinnings += RoundEngine.FoldWinnings * round.Frequency;
                 }
                 else
                 {
