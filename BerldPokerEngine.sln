@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BerldPokerEngine.API", "Ber
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleAppOutput", "ConsoleAppOutput\ConsoleAppOutput.csproj", "{A9FFE2F0-3DB4-4844-A605-EFDDCB925C50}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CasinoHoldemSimulator", "CasinoHoldemSimulator\CasinoHoldemSimulator.csproj", "{4440D92A-E76E-44FA-8F55-255A78991BCA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CasinoHoldemSimulator", "CasinoHoldemSimulator\CasinoHoldemSimulator.csproj", "{4440D92A-E76E-44FA-8F55-255A78991BCA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TexasHoldemBonusSimulator", "TexasHoldemBonusSimulator\TexasHoldemBonusSimulator.csproj", "{B4A7DEC2-E25F-49A6-B6AF-39AAFDB4C2B0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{4440D92A-E76E-44FA-8F55-255A78991BCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4440D92A-E76E-44FA-8F55-255A78991BCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4440D92A-E76E-44FA-8F55-255A78991BCA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4A7DEC2-E25F-49A6-B6AF-39AAFDB4C2B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4A7DEC2-E25F-49A6-B6AF-39AAFDB4C2B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4A7DEC2-E25F-49A6-B6AF-39AAFDB4C2B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4A7DEC2-E25F-49A6-B6AF-39AAFDB4C2B0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
