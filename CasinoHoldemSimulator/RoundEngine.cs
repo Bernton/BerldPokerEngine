@@ -18,9 +18,6 @@ namespace CasinoHoldemSimulator
 
         internal static int[] EvaluateRound(List<Card> playerCards, List<Card> flopCards)
         {
-            Debug.Assert(playerCards.Count == PlayerCardAmount);
-            Debug.Assert(flopCards.Count == FlopCardAmount);
-
             IEnumerable<Card> deadCards = Enumerable.Concat(playerCards, flopCards);
             Card[] aliveCards = EngineData.GetAllCards().Except(deadCards).ToArray();
 

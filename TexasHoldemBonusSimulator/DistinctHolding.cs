@@ -9,6 +9,10 @@ namespace TexasHoldemBonusSimulator
         internal string Key { get; }
         internal int Frequency { get; set; }
 
+        internal bool WinningsCalculated { get; set; } = false;
+        internal long Winnings { get; set; } = 0;
+
+
         internal DistinctHolding(Card[] cards, List<int> sortMarkers)
         {
             // SortByMarkers(cards, sortMarkers);
@@ -44,6 +48,7 @@ namespace TexasHoldemBonusSimulator
             Cards = normalCards;
             Key = GetKey(normalCards);
         }
+
 
         private static void SortByMarkers(Card[] cards, List<int> markers)
         {
