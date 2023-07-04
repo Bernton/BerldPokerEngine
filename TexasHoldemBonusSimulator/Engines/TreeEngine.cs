@@ -152,6 +152,7 @@ namespace TexasHoldemBonusSimulator.Engines
             });
 
             tokenSource.Cancel();
+            ReportProgress(holdings);
 
             return holdings.Sum(c => c.Winnings);
         }
