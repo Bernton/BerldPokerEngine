@@ -58,8 +58,18 @@ namespace TexasHoldemBonusSimulator
                 int last = markers[i + 1];
                 int diff = last - first;
 
+                if (first >= cards.Length)
+                {
+                    return;
+                }
+
                 if (diff > 1)
                 {
+                    if (first + diff > cards.Length)
+                    {
+                        diff = cards.Length - first;
+                    }
+
                     Array.Sort(cards, first, diff);
                 }
             }

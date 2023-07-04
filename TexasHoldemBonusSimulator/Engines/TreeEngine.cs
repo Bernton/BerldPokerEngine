@@ -15,6 +15,7 @@ namespace TexasHoldemBonusSimulator.Engines
         private const int TurnIterationAmount = 47;
         private const int ResultIterationAmount = 45_540;
 
+
         internal static long EvaluatePreflopTree(int ante)
         {
             Card[] aliveCards = EngineData.GetAllCards().ToArray();
@@ -48,7 +49,7 @@ namespace TexasHoldemBonusSimulator.Engines
 
             long winnings = 0;
 
-            foreach (DistinctHolding holding in holdingMap.Values)
+            foreach (DistinctHolding holding in holdingMap.Values.Skip(1))
             {
                 List<Card> playerCards = new()
                 {
@@ -127,7 +128,7 @@ namespace TexasHoldemBonusSimulator.Engines
                 }
             });
 
-            var result = Parallel.For(0, holdings.Length, i =>
+            Parallel.For(0, holdings.Length, i =>
             {
                 DistinctHolding holding = holdings[i];
 
@@ -227,8 +228,10 @@ namespace TexasHoldemBonusSimulator.Engines
                         Engine.SetHandValue(dealerAllCards, dealerValue);
 
                         int comparison = playerValue.CompareTo(dealerValue);
+                        bool isWin = comparison > 0;
+                        bool isLoss = comparison < 0;
 
-                        if (comparison > 0)
+                        if (isWin)
                         {
                             if (playerValue.Hand >= Hand.Straight)
                             {
@@ -237,7 +240,7 @@ namespace TexasHoldemBonusSimulator.Engines
 
                             winnings += restBet;
                         }
-                        else
+                        else if (isLoss)
                         {
                             winnings -= ante;
                             winnings -= restBet;
