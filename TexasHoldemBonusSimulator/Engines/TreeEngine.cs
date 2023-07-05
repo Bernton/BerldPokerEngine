@@ -49,7 +49,7 @@ namespace TexasHoldemBonusSimulator.Engines
 
             long winnings = 0;
 
-            foreach (DistinctHolding holding in holdingMap.Values.Skip(1))
+            foreach (DistinctHolding holding in holdingMap.Values.Skip(88))
             {
                 List<Card> playerCards = new()
                 {
