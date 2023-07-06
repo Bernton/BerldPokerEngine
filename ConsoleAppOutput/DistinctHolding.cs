@@ -8,10 +8,10 @@ namespace ConsoleAppOutput
         internal int Frequency { get; set; }
         internal string Key { get; }
         internal Card[] Cards { get; }
-        internal List<List<int>> SuitGroups { get; } = new();
+        //internal List<List<int>> SuitGroups { get; } = new();
 
 
-        internal DistinctHolding(Card[] cards)
+        internal DistinctHolding(Card[] cards, List<int>? markers)
         {
             Span<bool> wasAssigned = stackalloc bool[cards.Length];
             Card[] normalCards = new Card[cards.Length];
@@ -36,17 +36,42 @@ namespace ConsoleAppOutput
                 currentSuit++;
             }
 
-            Array.Sort(normalCards);
+            SortByMarkers(normalCards, markers);
             Cards = normalCards;
 
-            for (int i = 0; i < Suit.Amount; i++)
-            {
-                List<int> suitGroup = normalCards.Where(c => c.Suit == i).Select(c => c.Rank).ToList();
-                SuitGroups.Add(suitGroup);
-            }
+            //for (int i = 0; i < Suit.Amount; i++)
+            //{
+            //    List<int> suitGroup = normalCards.Where(c => c.Suit == i).Select(c => c.Rank).ToList();
+            //    SuitGroups.Add(suitGroup);
+            //}
 
-            SuitGroups = SuitGroups.OrderByDescending(c => c.Count).ThenBy(GroupToString).ToList();
-            Key = GetKey(SuitGroups);
+            //SuitGroups = SuitGroups.OrderByDescending(c => c.Count).ThenBy(GroupToString).ToList();
+            //Key = GetKey(SuitGroups);
+            Key = CardsString();
+        }
+
+        private static void SortByMarkers(Card[] cards, List<int>? markers)
+        {
+            if (markers is null) return;
+
+            for (int i = 0; i < markers.Count - 1; i++)
+            {
+                int first = markers[i];
+                int last = markers[i + 1];
+                int diff = last - first;
+
+                if (first >= cards.Length) return;
+
+                if (diff > 1)
+                {
+                    if (first + diff > cards.Length)
+                    {
+                        diff = cards.Length - first;
+                    }
+
+                    Array.Sort(cards, first, diff);
+                }
+            }
         }
 
         private static string GroupToString(List<int> group)

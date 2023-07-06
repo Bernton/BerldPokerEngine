@@ -1,6 +1,5 @@
-﻿using BerldPokerEngine.Poker;
-using BerldPokerEngine;
-using System.Text;
+﻿using BerldPokerEngine;
+using BerldPokerEngine.Poker;
 
 namespace ConsoleAppOutput
 {
@@ -8,52 +7,51 @@ namespace ConsoleAppOutput
     {
         internal static void Start()
         {
-            const int CardAmount = 7;
+            const int CardAmount = 5;
+            List<int> sectionMarkers = new() { 0, 2, CardAmount };
 
-            List<Card> cards = EngineData.GetAllCards();
-            Card[] holdingCards = new Card[CardAmount];
+            List<Card> allCards = EngineData.GetAllCards();
+
+            Card[] playerCards = new Card[CardAmount];
+            Card[] villainCards = new Card[CardAmount];
+
             Dictionary<string, DistinctHolding> holdingMap = new();
 
-            for (int c0 = 0; c0 < cards.Count; c0++)
+            for (int p1 = 0; p1 < allCards.Count; p1++)
             {
-                holdingCards[0] = cards[c0];
+                playerCards[0] = allCards[p1];
 
-                for (int c1 = c0 + 1; c1 < cards.Count; c1++)
+                for (int p2 = p1 + 1; p2 < allCards.Count; p2++)
                 {
-                    holdingCards[1] = cards[c1];
+                    playerCards[1] = allCards[p2];
 
-                    for (int c2 = c1 + 1; c2 < cards.Count; c2++)
+                    for (int f1 = 0; f1 < allCards.Count; f1++)
                     {
-                        holdingCards[2] = cards[c2];
+                        if (f1 == p1 || f1 == p2) continue;
+                        playerCards[2] = allCards[f1];
+                        villainCards[2] = allCards[f1];
 
-                        for (int c3 = c2 + 1; c3 < cards.Count; c3++)
+                        for (int f2 = f1 + 1; f2 < allCards.Count; f2++)
                         {
-                            holdingCards[3] = cards[c3];
+                            if (f2 == p1 || f2 == p2) continue;
+                            playerCards[3] = allCards[f2];
 
-                            for (int c4 = c3 + 1; c4 < cards.Count; c4++)
+                            for (int f3 = f2 + 1; f3 < allCards.Count; f3++)
                             {
-                                holdingCards[4] = cards[c4];
+                                if (f3 == p1 || f3 == p2) continue;
+                                playerCards[4] = allCards[f3];
 
-                                for (int c5 = c4 + 1; c5 < cards.Count; c5++)
+                                DistinctHolding holding = new(playerCards, sectionMarkers);
+
+                                if (holdingMap.ContainsKey(holding.Key))
                                 {
-                                    holdingCards[5] = cards[c5];
-
-                                    for (int c6 = c5 + 1; c6 < cards.Count; c6++)
-                                    {
-                                        holdingCards[6] = cards[c6];
-
-                                        DistinctHolding holding = new(holdingCards);
-
-                                        if (holdingMap.ContainsKey(holding.Key))
-                                        {
-                                            holdingMap[holding.Key].Frequency++;
-                                        }
-                                        else
-                                        {
-                                            holding.Frequency = 1;
-                                            holdingMap.Add(holding.Key, holding);
-                                        }
-                                    }
+                                    DistinctHolding existingHolding = holdingMap[holding.Key];
+                                    existingHolding.Frequency += 1;
+                                }
+                                else
+                                {
+                                    holding.Frequency = 1;
+                                    holdingMap.Add(holding.Key, holding);
                                 }
                             }
                         }
@@ -61,38 +59,22 @@ namespace ConsoleAppOutput
                 }
             }
 
-            DistinctHolding[] holdings = holdingMap.Values.OrderBy(c => c).ToArray();
-
-            int totalFrequency = holdings.Sum(c => c.Frequency);
+            DistinctHolding[] holdings = holdingMap.Values.ToArray();
 
             Console.WriteLine($"Amount of distinct holdings: {holdings.Length}");
-            Console.WriteLine($"Total frequency: {totalFrequency}");
-            Console.WriteLine();
-
-            string fileName = $"distinct{CardAmount}Holdings.csv";
-            StringBuilder fileContentBuilder = new();
-
-            for (int i = 0; i < holdings.Length; i++)
-            {
-                DistinctHolding holding = holdings[i];
-                fileContentBuilder.Append(holding.CardsString());
-                fileContentBuilder.Append(',');
-                fileContentBuilder.Append(holding.Frequency);
-                fileContentBuilder.AppendLine();
-            }
-
-            File.WriteAllText(fileName, fileContentBuilder.ToString());
-            Console.WriteLine($"Wrote file '{fileName}'");
             Console.WriteLine();
 
             HandValue handValue = new();
             int[] handAmounts = new int[Hand.Amount];
 
-            foreach (DistinctHolding holding in holdings)
+            for (int i = 0; i < holdings.Length; i++)
             {
+                DistinctHolding holding = holdings[i];
                 Engine.SetHandValue(holding.Cards, handValue);
                 handAmounts[handValue.Hand] += holding.Frequency;
             }
+
+            Console.WriteLine($"All:\t\t\t{handAmounts.Sum(c => c),15}");
 
             for (int hand = 0; hand < Hand.Amount; hand++)
             {
