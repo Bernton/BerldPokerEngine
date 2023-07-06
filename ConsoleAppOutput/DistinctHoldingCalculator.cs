@@ -83,16 +83,16 @@ namespace ConsoleAppOutput
 
             Console.WriteLine();
 
-            int pair = 0;
-            int twoPair = 0;
+            int pairs = 0;
+            int twoPairs = 0;
             int trips = 0;
             int sets = 0;
-            int quads_2_2 = 0;
             int quads_1_3 = 0;
+            int quads_2_2 = 0;
             int flushDraws_1_2 = 0;
             int flushDraws_2_1 = 0;
-            int flushDraws_2_2 = 0;
             int flushDraws_1_3 = 0;
+            int flushDraws_2_2 = 0;
             int flushes = 0;
 
             for (int holdingI = 0; holdingI < holdings.Length; holdingI++)
@@ -139,11 +139,11 @@ namespace ConsoleAppOutput
                     }
                     else if (rankAmounts[p1.Rank] == 1 && rankAmounts[p2.Rank] == 1)
                     {
-                        twoPair += holding.Frequency;
+                        twoPairs += holding.Frequency;
                     }
                     else if (rankAmounts[p1.Rank] == 1 || rankAmounts[p2.Rank] == 1)
                     {
-                        pair += holding.Frequency;
+                        pairs += holding.Frequency;
                     }
                 }
 
@@ -208,17 +208,17 @@ namespace ConsoleAppOutput
                 }
             }
 
-            Console.WriteLine($"Pair:\t\t\t{pair,10}");
-            Console.WriteLine($"Two pair:\t\t{twoPair,10}");
-            Console.WriteLine($"Trips:\t\t\t{trips,10}");
-            Console.WriteLine($"Sets:\t\t\t{sets,10}");
-            Console.WriteLine($"Quads 2 2:\t\t{quads_2_2,10}");
-            Console.WriteLine($"Quads 1 3:\t\t{quads_1_3,10}");
-            Console.WriteLine($"Flush draws 1 2:\t{flushDraws_1_2,10}");
-            Console.WriteLine($"Flush draws 2 1:\t{flushDraws_2_1,10}");
-            Console.WriteLine($"Flush draws 2 2:\t{flushDraws_2_2,10}");
-            Console.WriteLine($"Flush draws 1 3:\t{flushDraws_1_3,10}");
-            Console.WriteLine($"Flushes:\t\t{flushes,10}");
+            Console.WriteLine($"Pair:\t\t\t{pairs,15}");
+            Console.WriteLine($"Two pair:\t\t{twoPairs,15}");
+            Console.WriteLine($"Trips:\t\t\t{trips,15}");
+            Console.WriteLine($"Sets:\t\t\t{sets,15}");
+            Console.WriteLine($"Quads 1 3:\t\t{quads_1_3,15}");
+            Console.WriteLine($"Quads 2 2:\t\t{quads_2_2,15}");
+            Console.WriteLine($"Flush draws 1 2:\t{flushDraws_1_2,15}");
+            Console.WriteLine($"Flush draws 2 1:\t{flushDraws_2_1,15}");
+            Console.WriteLine($"Flush draws 1 3:\t{flushDraws_1_3,15}");
+            Console.WriteLine($"Flush draws 2 2:\t{flushDraws_2_2,15}");
+            Console.WriteLine($"Flushes:\t\t{flushes,15}");
         }
     }
 }
