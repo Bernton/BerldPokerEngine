@@ -80,6 +80,145 @@ namespace ConsoleAppOutput
                 int handAmount = handAmounts[hand];
                 Console.WriteLine($"{formattedHand}:{tabPadding}{handAmount,15}");
             }
+
+            Console.WriteLine();
+
+            int pair = 0;
+            int twoPair = 0;
+            int trips = 0;
+            int sets = 0;
+            int quads_2_2 = 0;
+            int quads_1_3 = 0;
+            int flushDraws_1_2 = 0;
+            int flushDraws_2_1 = 0;
+            int flushDraws_2_2 = 0;
+            int flushDraws_1_3 = 0;
+            int flushes = 0;
+
+            for (int holdingI = 0; holdingI < holdings.Length; holdingI++)
+            {
+                DistinctHolding holding = holdings[holdingI];
+
+                Card p1 = holding.Cards[0];
+                Card p2 = holding.Cards[1];
+
+                Card[] flop = new Card[]
+                {
+                    holding.Cards[2],
+                    holding.Cards[3],
+                    holding.Cards[4]
+                };
+
+                int[] rankAmounts = new int[Rank.Amount];
+
+                for (int i = 0; i < flop.Length; i++)
+                {
+                    rankAmounts[flop[i].Rank]++;
+                }
+
+                if (p1.Rank == p2.Rank)
+                {
+                    if (rankAmounts[p1.Rank] == 2)
+                    {
+                        quads_2_2 += holding.Frequency;
+                    }
+                    else if (rankAmounts[p1.Rank] == 1)
+                    {
+                        sets += holding.Frequency;
+                    }
+                }
+                else
+                {
+                    if (rankAmounts[p1.Rank] == 3 || rankAmounts[p2.Rank] == 3)
+                    {
+                        quads_1_3 += holding.Frequency;
+                    }
+                    else if (rankAmounts[p1.Rank] == 2 || rankAmounts[p2.Rank] == 2)
+                    {
+                        trips += holding.Frequency;
+                    }
+                    else if (rankAmounts[p1.Rank] == 1 && rankAmounts[p2.Rank] == 1)
+                    {
+                        twoPair += holding.Frequency;
+                    }
+                    else if (rankAmounts[p1.Rank] == 1 || rankAmounts[p2.Rank] == 1)
+                    {
+                        pair += holding.Frequency;
+                    }
+                }
+
+                int[] suitAmounts = new int[Suit.Amount];
+
+                for (int i = 0; i < flop.Length; i++)
+                {
+                    suitAmounts[flop[i].Suit]++;
+                }
+
+                if (p1.Suit == p2.Suit && suitAmounts[p1.Suit] == 1)
+                {
+                    flushDraws_2_1 += holding.Frequency;
+                }
+
+                int? flushFlop3 = null;
+
+                for (int i = 0; i < Suit.Amount; i++)
+                {
+                    if (suitAmounts[i] == 3)
+                    {
+                        flushFlop3 = i;
+                        break;
+                    }
+                }
+
+                if (flushFlop3.HasValue)
+                {
+                    if (p1.Suit == flushFlop3.Value && p2.Suit == flushFlop3.Value)
+                    {
+                        flushes += holding.Frequency;
+                    }
+                    else if (p1.Suit == flushFlop3.Value || p2.Suit == flushFlop3.Value)
+                    {
+                        flushDraws_1_3 += holding.Frequency;
+                    }
+                }
+
+                int? flushFlop2 = null;
+
+                for (int i = 0; i < Suit.Amount; i++)
+                {
+                    if (suitAmounts[i] == 2)
+                    {
+                        flushFlop2 = i;
+                        break;
+                    }
+                }
+
+                if (flushFlop2.HasValue)
+                {
+                    if (p1.Suit == flushFlop2.Value &&
+                        p2.Suit == flushFlop2.Value)
+                    {
+                        flushDraws_2_2 += holding.Frequency;
+                    }
+                    else if (p1.Suit == flushFlop2.Value ||
+                        p2.Suit == flushFlop2.Value)
+                    {
+                        flushDraws_1_2 += holding.Frequency;
+                    }
+                }
+            }
+
+            Console.WriteLine($"Pair:\t\t\t{pair,10}");
+            Console.WriteLine($"Two pair:\t\t{twoPair,10}");
+            Console.WriteLine($"Trips:\t\t\t{trips,10}");
+            Console.WriteLine($"Sets:\t\t\t{sets,10}");
+            Console.WriteLine($"Quads 2 2:\t\t{quads_2_2,10}");
+            Console.WriteLine($"Quads 1 3:\t\t{quads_1_3,10}");
+            Console.WriteLine($"Flush draws 1 2:\t{flushDraws_1_2,10}");
+            Console.WriteLine($"Flush draws 2 1:\t{flushDraws_2_1,10}");
+            Console.WriteLine($"Flush draws 2 2:\t{flushDraws_2_2,10}");
+            Console.WriteLine($"Flush draws 1 3:\t{flushDraws_1_3,10}");
+            Console.WriteLine($"Flushes:\t\t{flushes,10}");
         }
     }
 }

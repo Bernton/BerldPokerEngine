@@ -8,7 +8,7 @@ namespace ConsoleAppOutput
         internal int Frequency { get; set; }
         internal string Key { get; }
         internal Card[] Cards { get; }
-        //internal List<List<int>> SuitGroups { get; } = new();
+        internal List<List<(int rank, bool isPlayerCard)>> SuitGroups { get; } = new();
 
 
         internal DistinctHolding(Card[] cards, List<int>? markers)
@@ -39,15 +39,39 @@ namespace ConsoleAppOutput
             SortByMarkers(normalCards, markers);
             Cards = normalCards;
 
-            //for (int i = 0; i < Suit.Amount; i++)
-            //{
-            //    List<int> suitGroup = normalCards.Where(c => c.Suit == i).Select(c => c.Rank).ToList();
-            //    SuitGroups.Add(suitGroup);
-            //}
+            bool useSuitGroup = true;
+            Card p1 = cards[0];
+            Card p2 = cards[1];
 
-            //SuitGroups = SuitGroups.OrderByDescending(c => c.Count).ThenBy(GroupToString).ToList();
-            //Key = GetKey(SuitGroups);
-            Key = CardsString();
+            for (int i = 0; i < Suit.Amount; i++)
+            {
+                List<(int rank, bool isPlayerCard)> suitGroup =
+                    normalCards
+                        .Where(c => c.Suit == i)
+                        .Select(c => (c.Rank, c.Index == p1.Index || c.Index == p1.Index))
+                        .ToList();
+
+                SuitGroups.Add(suitGroup);
+            }
+
+            if (cards[0].Suit == cards[1].Suit)
+            {
+                SuitGroups =
+                    SuitGroups
+                        .OrderByDescending(c => c.Count(c => c.isPlayerCard))
+                        .ThenByDescending(c => c.Count)
+                        .ThenBy(GroupToString)
+                        .ToList();
+            }
+            else
+            {
+                useSuitGroup = false;
+                //List<(int, bool)>? p1Group = SuitGroups.Find(c => c.Any(c => c.Item2 && c.Item1 == cards[0].Rank));
+                //List<(int, bool)>? p2Group = SuitGroups.Find(c => c.Any(c => c.Item2 && c.Item1 == cards[0].Rank));
+            }
+
+            Key = useSuitGroup ? GetKey(SuitGroups) : CardsString();
+            //Key = CardsString();
         }
 
         private static void SortByMarkers(Card[] cards, List<int>? markers)
@@ -74,26 +98,26 @@ namespace ConsoleAppOutput
             }
         }
 
-        private static string GroupToString(List<int> group)
+        private static string GroupToString(List<(int rank, bool isPlayerCard)> group)
         {
             StringBuilder builder = new();
 
             for (int i = 0; i < group.Count; i++)
             {
-                builder.Append(group[i]);
+                builder.Append(group[i].rank);
             }
 
             return builder.ToString();
         }
 
-        private static string GetKey(List<List<int>> suitGroups)
+        private static string GetKey(List<List<(int rank, bool isPlayerCard)>> suitGroups)
         {
             int currentSuit = Suit.Clubs;
             StringBuilder builder = new();
 
-            foreach (List<int> group in suitGroups)
+            foreach (List<(int rank, bool isPlayerCard)> group in suitGroups)
             {
-                foreach (int rank in group)
+                foreach ((int rank, bool isPlayerCard) in group)
                 {
                     Card card = Card.Create(rank, currentSuit);
                     builder.Append(card.ToString());
