@@ -1,5 +1,6 @@
 ﻿using BerldPokerEngine.Poker;
 using BerldPokerEngine;
+using System.Text;
 
 namespace ConsoleAppOutput
 {
@@ -7,11 +8,13 @@ namespace ConsoleAppOutput
     {
         internal static void Start()
         {
+            const int CardAmount = 7;
+
             List<Card> cards = EngineData.GetAllCards();
 
             Dictionary<string, DistinctHolding> holdingMap = new();
 
-            Card[] holdingCards = new Card[5];
+            Card[] holdingCards = new Card[CardAmount];
 
             for (int c0 = 0; c0 < cards.Count; c0++)
             {
@@ -34,16 +37,26 @@ namespace ConsoleAppOutput
                                 holdingCards[4] = cards[c4];
 
 
-                                DistinctHolding holding = new(holdingCards);
+                                for (int c5 = c4 + 1; c5 < cards.Count; c5++)
+                                {
+                                    holdingCards[5] = cards[c5];
 
-                                if (holdingMap.ContainsKey(holding.Key))
-                                {
-                                    holdingMap[holding.Key].Frequency++;
-                                }
-                                else
-                                {
-                                    holding.Frequency = 1;
-                                    holdingMap.Add(holding.Key, holding);
+                                    for (int c6 = c5 + 1; c6 < cards.Count; c6++)
+                                    {
+                                        holdingCards[6] = cards[c6];
+
+                                        DistinctHolding holding = new(holdingCards);
+
+                                        if (holdingMap.ContainsKey(holding.Key))
+                                        {
+                                            holdingMap[holding.Key].Frequency++;
+                                        }
+                                        else
+                                        {
+                                            holding.Frequency = 1;
+                                            holdingMap.Add(holding.Key, holding);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -51,14 +64,46 @@ namespace ConsoleAppOutput
                 }
             }
 
-            DistinctHolding[] holdings = holdingMap.Values.ToArray();
-
-
+            DistinctHolding[] holdings = holdingMap.Values.OrderBy(c => c).ToArray();
 
             int totalFrequency = holdings.Sum(c => c.Frequency);
 
-            Console.WriteLine($"Amount of distinct holdings: {holdings.Length} (should be 134459)");
+            Console.WriteLine($"Amount of distinct holdings: {holdings.Length}");
             Console.WriteLine($"Total frequency: {totalFrequency}");
+            Console.WriteLine();
+
+            string fileName = $"distinct{CardAmount}Holdings.csv";
+            StringBuilder fileContentBuilder = new();
+
+            for (int i = 0; i < holdings.Length; i++)
+            {
+                DistinctHolding holding = holdings[i];
+                fileContentBuilder.Append(holding.CardsString());
+                fileContentBuilder.Append(',');
+                fileContentBuilder.Append(holding.Frequency);
+                fileContentBuilder.AppendLine();
+            }
+
+            File.WriteAllText(fileName, fileContentBuilder.ToString());
+            Console.WriteLine($"Wrote file '{fileName}'");
+            Console.WriteLine();
+
+            HandValue value = new();
+            int[] handAmounts = new int[Hand.Amount];
+
+            foreach (DistinctHolding holding in holdings)
+            {
+                Engine.SetHandValue(holding.Cards, value);
+                handAmounts[value.Hand] += holding.Frequency;
+            }
+
+            for (int hand = 0; hand < Hand.Amount; hand++)
+            {
+                string formattedHand = Hand.ToFormatString(hand);
+                string tabPadding = Hand.GetTabPadding(hand);
+                int handAmount = handAmounts[hand];
+                Console.WriteLine($"{formattedHand}:{tabPadding}{handAmount,15}");
+            }
         }
     }
 }
