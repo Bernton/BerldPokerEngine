@@ -20,10 +20,7 @@ namespace ConsoleAppOutput
 
             for (int i = 0; i < cards.Length; i++)
             {
-                if (wasAssigned[i])
-                {
-                    continue;
-                }
+                if (wasAssigned[i]) continue;
 
                 int suitToMap = cards[i].Suit;
 
@@ -66,9 +63,8 @@ namespace ConsoleAppOutput
 
         private static string GetKey(List<List<int>> suitGroups)
         {
-            StringBuilder builder = new();
-
             int currentSuit = Suit.Clubs;
+            StringBuilder builder = new();
 
             foreach (List<int> group in suitGroups)
             {

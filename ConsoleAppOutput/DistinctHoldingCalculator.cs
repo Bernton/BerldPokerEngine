@@ -11,10 +11,8 @@ namespace ConsoleAppOutput
             const int CardAmount = 7;
 
             List<Card> cards = EngineData.GetAllCards();
-
-            Dictionary<string, DistinctHolding> holdingMap = new();
-
             Card[] holdingCards = new Card[CardAmount];
+            Dictionary<string, DistinctHolding> holdingMap = new();
 
             for (int c0 = 0; c0 < cards.Count; c0++)
             {
@@ -35,7 +33,6 @@ namespace ConsoleAppOutput
                             for (int c4 = c3 + 1; c4 < cards.Count; c4++)
                             {
                                 holdingCards[4] = cards[c4];
-
 
                                 for (int c5 = c4 + 1; c5 < cards.Count; c5++)
                                 {
@@ -88,13 +85,13 @@ namespace ConsoleAppOutput
             Console.WriteLine($"Wrote file '{fileName}'");
             Console.WriteLine();
 
-            HandValue value = new();
+            HandValue handValue = new();
             int[] handAmounts = new int[Hand.Amount];
 
             foreach (DistinctHolding holding in holdings)
             {
-                Engine.SetHandValue(holding.Cards, value);
-                handAmounts[value.Hand] += holding.Frequency;
+                Engine.SetHandValue(holding.Cards, handValue);
+                handAmounts[handValue.Hand] += holding.Frequency;
             }
 
             for (int hand = 0; hand < Hand.Amount; hand++)
