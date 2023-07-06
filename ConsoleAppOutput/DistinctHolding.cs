@@ -36,8 +36,8 @@ namespace ConsoleAppOutput
 
             SortByMarkers(normalCards, markers);
 
-            Card p1 = cards[0];
-            Card p2 = cards[1];
+            Card p1 = normalCards[0];
+            Card p2 = normalCards[1];
             bool isPocketPair = p1.Rank == p2.Rank;
 
             if (isPocketPair)
@@ -45,7 +45,7 @@ namespace ConsoleAppOutput
                 var p1SuitGroup = normalCards.Where(c => c.Suit == p1.Suit).ToList();
                 var p2SuitGroup = normalCards.Where(c => c.Suit == p2.Suit).ToList();
 
-                if (p1SuitGroup.Count == 1 && p2SuitGroup.Count > p1SuitGroup.Count)
+                if (p2SuitGroup.Count > p1SuitGroup.Count)
                 {
                     for (int i = 2; i < normalCards.Length; i++)
                     {
@@ -56,6 +56,32 @@ namespace ConsoleAppOutput
                         else if (normalCards[i].Suit == p2.Suit)
                         {
                             normalCards[i] = Card.Create(normalCards[i].Rank, p1.Suit);
+                        }
+                    }
+                }
+
+                SortByMarkers(normalCards, markers);
+            }
+
+            Card f1 = normalCards[2];
+            Card f2 = normalCards[3];
+
+            if (f1.Rank == f2.Rank)
+            {
+                var f1SuitGroup = normalCards.Where(c => c.Suit == f1.Suit).ToList();
+                var f2SuitGroup = normalCards.Where(c => c.Suit == f2.Suit).ToList();
+
+                if (f2SuitGroup.Count > f1SuitGroup.Count)
+                {
+                    for (int i = 4; i < normalCards.Length; i++)
+                    {
+                        if (normalCards[i].Suit == f1.Suit)
+                        {
+                            normalCards[i] = Card.Create(normalCards[i].Rank, f2.Suit);
+                        }
+                        else if (normalCards[i].Suit == f2.Suit)
+                        {
+                            normalCards[i] = Card.Create(normalCards[i].Rank, f1.Suit);
                         }
                     }
                 }
