@@ -116,6 +116,7 @@ namespace TexasHoldemBonusSimulator.Engines
 
             Console.WriteLine(holdings.Length);
 
+            DateTime startTime = default;
             CancellationTokenSource tokenSource = new();
 
             Task reportingTask = Task.Run(async () =>
@@ -124,9 +125,11 @@ namespace TexasHoldemBonusSimulator.Engines
                 {
                     await Task.Delay(10_000);
                     if (tokenSource.IsCancellationRequested) return;
-                    ReportProgress(holdings);
+                    ReportProgress(holdings, startTime);
                 }
             });
+
+            startTime = DateTime.Now;
 
             Parallel.For(0, holdings.Length, i =>
             {
@@ -152,7 +155,7 @@ namespace TexasHoldemBonusSimulator.Engines
             });
 
             tokenSource.Cancel();
-            ReportProgress(holdings);
+            ReportProgress(holdings, startTime);
 
             return holdings.Sum(c => c.Winnings);
         }
@@ -253,9 +256,11 @@ namespace TexasHoldemBonusSimulator.Engines
             return winnings;
         }
 
-        private static void ReportProgress(DistinctHolding[] holdings)
+        private static void ReportProgress(DistinctHolding[] holdings, DateTime startTime)
         {
+            TimeSpan elapsed = DateTime.Now - startTime;
             int holdingsDone = holdings.Count(c => c.WinningsCalculated);
+            double speed = holdingsDone / elapsed.TotalSeconds;
             long winnings = holdings.Sum(c => c.Winnings);
             double progressPercent = holdingsDone / (double)holdings.Length * 100;
             double averageWinnings = winnings / (double)FlopTreeIterationAmount;
@@ -263,6 +268,7 @@ namespace TexasHoldemBonusSimulator.Engines
             Console.WriteLine($"Progress: {progressPercent:0.00}%");
             Console.WriteLine($"Winnings: {winnings}");
             Console.WriteLine($"Average winnings: {averageWinnings:G4}");
+            Console.WriteLine($"Speed: {speed:0.00} holdings per second");
             Console.WriteLine();
         }
     }
