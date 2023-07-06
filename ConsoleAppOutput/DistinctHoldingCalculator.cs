@@ -11,9 +11,7 @@ namespace ConsoleAppOutput
             List<int> sectionMarkers = new() { 0, 2, CardAmount };
 
             List<Card> allCards = EngineData.GetAllCards();
-
             Card[] playerCards = new Card[CardAmount];
-            Card[] villainCards = new Card[CardAmount];
 
             Dictionary<string, DistinctHolding> holdingMap = new();
 
@@ -29,7 +27,6 @@ namespace ConsoleAppOutput
                     {
                         if (f1 == p1 || f1 == p2) continue;
                         playerCards[2] = allCards[f1];
-                        villainCards[2] = allCards[f1];
 
                         for (int f2 = f1 + 1; f2 < allCards.Count; f2++)
                         {
