@@ -49,7 +49,7 @@ namespace TexasHoldemBonusSimulator.Engines
 
             long winnings = 0;
 
-            foreach (DistinctHolding holding in holdingMap.Values.Skip(98))
+            foreach (DistinctHolding holding in holdingMap.Values)
             {
                 List<Card> playerCards = new()
                 {
@@ -123,7 +123,7 @@ namespace TexasHoldemBonusSimulator.Engines
             {
                 while (!tokenSource.IsCancellationRequested)
                 {
-                    await Task.Delay(10_000);
+                    await Task.Delay(250_000);
                     if (tokenSource.IsCancellationRequested) return;
                     ReportProgress(holdings, startTime);
                 }
