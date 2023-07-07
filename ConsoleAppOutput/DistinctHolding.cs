@@ -8,10 +8,8 @@ namespace ConsoleAppOutput
         internal int Frequency { get; set; }
         internal string Key { get; }
         internal Card[] Cards { get; }
-        internal List<List<int>> SuitGroups { get; } = new();
 
-
-        internal DistinctHolding(Card[] cards)
+        internal DistinctHolding(Card[] cards, List<int>? markers)
         {
             Span<bool> wasAssigned = stackalloc bool[cards.Length];
             Card[] normalCards = new Card[cards.Length];
@@ -36,39 +34,109 @@ namespace ConsoleAppOutput
                 currentSuit++;
             }
 
-            Array.Sort(normalCards);
-            Cards = normalCards;
+            SortByMarkers(normalCards, markers);
 
-            for (int i = 0; i < Suit.Amount; i++)
+            Card p1 = normalCards[0];
+            Card p2 = normalCards[1];
+            bool isPocketPair = p1.Rank == p2.Rank;
+
+            if (isPocketPair)
             {
-                List<int> suitGroup = normalCards.Where(c => c.Suit == i).Select(c => c.Rank).ToList();
-                SuitGroups.Add(suitGroup);
+                var p1SuitGroup = normalCards.Where(c => c.Suit == p1.Suit).ToList();
+                var p2SuitGroup = normalCards.Where(c => c.Suit == p2.Suit).ToList();
+
+                if (p2SuitGroup.Count > p1SuitGroup.Count)
+                {
+                    for (int i = 2; i < normalCards.Length; i++)
+                    {
+                        if (normalCards[i].Suit == p1.Suit)
+                        {
+                            normalCards[i] = Card.Create(normalCards[i].Rank, p2.Suit);
+                        }
+                        else if (normalCards[i].Suit == p2.Suit)
+                        {
+                            normalCards[i] = Card.Create(normalCards[i].Rank, p1.Suit);
+                        }
+                    }
+                }
+
+                SortByMarkers(normalCards, markers);
             }
 
-            SuitGroups = SuitGroups.OrderByDescending(c => c.Count).ThenBy(GroupToString).ToList();
-            Key = GetKey(SuitGroups);
+            Card f1 = normalCards[2];
+            Card f2 = normalCards[3];
+
+            if (f1.Rank == f2.Rank)
+            {
+                var f1SuitGroup = normalCards.Where(c => c.Suit == f1.Suit).ToList();
+                var f2SuitGroup = normalCards.Where(c => c.Suit == f2.Suit).ToList();
+
+                if (f2SuitGroup.Count > f1SuitGroup.Count)
+                {
+                    for (int i = 4; i < normalCards.Length; i++)
+                    {
+                        if (normalCards[i].Suit == f1.Suit)
+                        {
+                            normalCards[i] = Card.Create(normalCards[i].Rank, f2.Suit);
+                        }
+                        else if (normalCards[i].Suit == f2.Suit)
+                        {
+                            normalCards[i] = Card.Create(normalCards[i].Rank, f1.Suit);
+                        }
+                    }
+
+                    SortByMarkers(normalCards, markers);
+                }
+            }
+
+            Cards = normalCards;
+            Key = CardsString(Cards);
         }
 
-        private static string GroupToString(List<int> group)
+        private static void SortByMarkers(Card[] cards, List<int>? markers)
+        {
+            if (markers is null) return;
+
+            for (int i = 0; i < markers.Count - 1; i++)
+            {
+                int first = markers[i];
+                int last = markers[i + 1];
+                int diff = last - first;
+
+                if (first >= cards.Length) return;
+
+                if (diff > 1)
+                {
+                    if (first + diff > cards.Length)
+                    {
+                        diff = cards.Length - first;
+                    }
+
+                    Array.Sort(cards, first, diff);
+                }
+            }
+        }
+
+        private static string GroupToString(List<(int rank, bool isPlayerCard)> group)
         {
             StringBuilder builder = new();
 
             for (int i = 0; i < group.Count; i++)
             {
-                builder.Append(group[i]);
+                builder.Append(group[i].rank);
             }
 
             return builder.ToString();
         }
 
-        private static string GetKey(List<List<int>> suitGroups)
+        private static string GetKey(List<List<(int rank, bool isPlayerCard)>> suitGroups)
         {
             int currentSuit = Suit.Clubs;
             StringBuilder builder = new();
 
-            foreach (List<int> group in suitGroups)
+            foreach (List<(int rank, bool isPlayerCard)> group in suitGroups)
             {
-                foreach (int rank in group)
+                foreach ((int rank, bool isPlayerCard) in group)
                 {
                     Card card = Card.Create(rank, currentSuit);
                     builder.Append(card.ToString());
@@ -80,13 +148,13 @@ namespace ConsoleAppOutput
             return builder.ToString();
         }
 
-        public string CardsString()
+        public static string CardsString(Card[] cards)
         {
             StringBuilder builder = new();
 
-            for (int i = 0; i < Cards.Length; i++)
+            for (int i = 0; i < cards.Length; i++)
             {
-                builder.Append(Cards[i].ToString());
+                builder.Append(cards[i].ToString());
             }
 
             return builder.ToString();
@@ -94,7 +162,7 @@ namespace ConsoleAppOutput
 
         public override string ToString()
         {
-            return $"{CardsString()} {Frequency}";
+            return $"{CardsString(Cards)} {Frequency}";
         }
 
         public int CompareTo(DistinctHolding? other)
