@@ -84,13 +84,13 @@ namespace ConsoleAppOutput
                             normalCards[i] = Card.Create(normalCards[i].Rank, f1.Suit);
                         }
                     }
-                }
 
-                SortByMarkers(normalCards, markers);
+                    SortByMarkers(normalCards, markers);
+                }
             }
 
             Cards = normalCards;
-            Key = CardsString();
+            Key = CardsString(Cards);
         }
 
         private static void SortByMarkers(Card[] cards, List<int>? markers)
@@ -148,13 +148,13 @@ namespace ConsoleAppOutput
             return builder.ToString();
         }
 
-        public string CardsString()
+        public static string CardsString(Card[] cards)
         {
             StringBuilder builder = new();
 
-            for (int i = 0; i < Cards.Length; i++)
+            for (int i = 0; i < cards.Length; i++)
             {
-                builder.Append(Cards[i].ToString());
+                builder.Append(cards[i].ToString());
             }
 
             return builder.ToString();
@@ -162,7 +162,7 @@ namespace ConsoleAppOutput
 
         public override string ToString()
         {
-            return $"{CardsString()} {Frequency}";
+            return $"{CardsString(Cards)} {Frequency}";
         }
 
         public int CompareTo(DistinctHolding? other)

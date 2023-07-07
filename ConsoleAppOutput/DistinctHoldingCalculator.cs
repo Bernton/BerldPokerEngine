@@ -1,5 +1,6 @@
 ﻿using BerldPokerEngine;
 using BerldPokerEngine.Poker;
+using System.Text;
 
 namespace ConsoleAppOutput
 {
@@ -56,7 +57,7 @@ namespace ConsoleAppOutput
                 }
             }
 
-            DistinctHolding[] holdings = holdingMap.Values.ToArray();
+            DistinctHolding[] holdings = holdingMap.Values.OrderBy(c => c).ToArray();
 
             Console.WriteLine($"Amount of distinct holdings: {holdings.Length}");
             Console.WriteLine();
@@ -89,6 +90,7 @@ namespace ConsoleAppOutput
             int sets = 0;
             int quads_1_3 = 0;
             int quads_2_2 = 0;
+            int open_enders = 0;
             int flushDraws_1_2 = 0;
             int flushDraws_2_1 = 0;
             int flushDraws_1_3 = 0;
@@ -145,6 +147,13 @@ namespace ConsoleAppOutput
                     {
                         pairs += holding.Frequency;
                     }
+                }
+
+                bool isOpenEnder = IsFourStraightWithBothCards(rankAmounts, p1, p2);
+
+                if (isOpenEnder)
+                {
+                    open_enders += holding.Frequency;
                 }
 
                 int[] suitAmounts = new int[Suit.Amount];
@@ -214,11 +223,67 @@ namespace ConsoleAppOutput
             Console.WriteLine($"Sets:\t\t\t{sets,15}");
             Console.WriteLine($"Quads 1 3:\t\t{quads_1_3,15}");
             Console.WriteLine($"Quads 2 2:\t\t{quads_2_2,15}");
+            Console.WriteLine($"Open enders:\t\t{open_enders,15}");
             Console.WriteLine($"Flush draws 1 2:\t{flushDraws_1_2,15}");
             Console.WriteLine($"Flush draws 2 1:\t{flushDraws_2_1,15}");
             Console.WriteLine($"Flush draws 1 3:\t{flushDraws_1_3,15}");
             Console.WriteLine($"Flush draws 2 2:\t{flushDraws_2_2,15}");
             Console.WriteLine($"Flushes:\t\t{flushes,15}");
+            Console.WriteLine();
+
+            string fileName = "distinctFlopSituations.csv";
+            StringBuilder builder = new();
+
+            for (int i = 0; i < holdings.Length; i++)
+            {
+                DistinctHolding holding = holdings[i];
+                string csvRow = $"{holding.Key}, {holding.Frequency}";
+                builder.AppendLine(csvRow);
+            }
+
+            File.WriteAllText(fileName, builder.ToString());
+            Console.WriteLine($"Wrote '{fileName}' with {holdings.Length} rows");
+        }
+
+        private static bool IsFourStraightWithBothCards(int[] flopRankAmounts, Card p1, Card p2)
+        {
+            if (p1.Rank == p2.Rank || flopRankAmounts[p1.Rank] > 0 || flopRankAmounts[p2.Rank] > 0) return false;
+
+            int[] rankAmounts = flopRankAmounts.ToArray();
+            rankAmounts[p1.Rank]++;
+            rankAmounts[p2.Rank]++;
+
+            int? tail4 = null;
+            int consecutiveAmount = 0;
+
+            for (int i = Rank.Ace; i >= Rank.Deuce; i--)
+            {
+                if (rankAmounts[i] > 0)
+                {
+                    consecutiveAmount++;
+
+                    if (consecutiveAmount == 4)
+                    {
+                        tail4 = i;
+                    }
+                    else if (consecutiveAmount == 5)
+                    {
+                        tail4 = null;
+                    }
+                }
+                else
+                {
+                    consecutiveAmount = 0;
+                }
+            }
+
+            if (!tail4.HasValue) return false;
+
+            int head4 = tail4.Value + 3;
+
+            bool p1InStraight = p1.Rank >= tail4 && p1.Rank <= head4;
+            bool p2InStraight = p2.Rank >= tail4 && p2.Rank <= head4;
+            return p1InStraight && p2InStraight;
         }
     }
 }
