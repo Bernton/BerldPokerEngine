@@ -18,22 +18,17 @@ namespace UltimateTexasHoldemSimulator
 
         private static void Main()
         {
-            // Ante 1, Blind 1, Play 0
+            List<Card> playerCards = new() { Card.CardJc, Card.Card8c };
 
-            // See first 2 cards
-
-            // Check, raise 4x or raise 3x
-
-            List<Card> playerCards = new() { Card.Card2c, Card.Card3d };
+            DateTime startTime = DateTime.Now;
 
             EvaluatePreflop(playerCards);
 
-            //(double winnings3, double winnings4) = OnRaise3or4(playerCards);
+            DateTime endTime = DateTime.Now;
+            TimeSpan elapsed = endTime - startTime;
 
-            //Console.WriteLine($"Winnings 3: {winnings3} times the ante.");
-            //Console.WriteLine($"Winnings 4: {winnings4} times the ante.");
+            Console.WriteLine($"Time: {elapsed}");
         }
-
 
         private static (double winnings, long playBetWins) EvaluateResult(List<Card> playerCards, Card[] boardCards)
         {
@@ -105,35 +100,64 @@ namespace UltimateTexasHoldemSimulator
             const int RiverRaise = 1 * Ante;
             const int FoldWinnings = -(Ante + Blind) * ResultIterations;
 
-            List<Card> aliveCards = EngineData.GetAllCards().Except(playerCards).Except(flopCards).ToList();
+            Card[] aliveCards = EngineData.GetAllCards().Except(playerCards).Except(flopCards).ToArray();
 
-            Card[] boardCards = new Card[5];
+            List<int> sortMarkers = new() { 0, 2, 5, 7 };
+            Dictionary<string, DistinctFlopHolding> holdingMap = new();
 
-            for (int i = 0; i < flopCards.Length; i++)
+            for (int b4 = 0; b4 < aliveCards.Length; b4++)
             {
-                boardCards[i] = flopCards[i];
+                for (int b5 = b4 + 1; b5 < aliveCards.Length; b5++)
+                {
+                    Card[] cards = new Card[]
+                    {
+                            playerCards[0],
+                            playerCards[1],
+                            flopCards[0],
+                            flopCards[1],
+                            flopCards[2],
+                            aliveCards[b4],
+                            aliveCards[b5],
+                    };
+
+                    DistinctFlopHolding holding = new(cards, sortMarkers);
+
+                    if (holdingMap.ContainsKey(holding.Key))
+                    {
+                        holdingMap[holding.Key].Frequency++;
+                    }
+                    else
+                    {
+                        holding.Frequency = 1;
+                        holdingMap.Add(holding.Key, holding);
+                    }
+                }
             }
+
+            DistinctFlopHolding[] holdings = holdingMap.Values.ToArray();
 
             double winnings = 0;
             long playBetWins = 0;
             double checkWinnings = 0;
 
-            for (int b4 = 0; b4 < aliveCards.Count; b4++)
+            Card[] boardCards = new Card[5];
+
+            for (int i = 0; i < holdings.Length; i++)
             {
-                boardCards[3] = aliveCards[b4];
+                DistinctFlopHolding holding = holdings[i];
 
-                for (int b5 = b4 + 1; b5 < aliveCards.Count; b5++)
+                for (int cardI = 0; cardI < 5; cardI++)
                 {
-                    boardCards[4] = aliveCards[b5];
-
-                    (double resultWinnings, long resultPlayBetWins) = EvaluateResult(playerCards, boardCards);
-
-                    winnings += resultWinnings;
-                    playBetWins += resultPlayBetWins;
-
-                    double boardRaiseWinnings = resultWinnings + resultPlayBetWins * RiverRaise;
-                    checkWinnings += Math.Max(boardRaiseWinnings, FoldWinnings);
+                    boardCards[cardI] = holding.Cards[playerCards.Count + cardI];
                 }
+
+                (double resultWinnings, long resultPlayBetWins) = EvaluateResult(playerCards, boardCards);
+
+                winnings += holding.Frequency * resultWinnings;
+                playBetWins += holding.Frequency * resultPlayBetWins;
+
+                double boardRaiseWinnings = resultWinnings + resultPlayBetWins * RiverRaise;
+                checkWinnings += holding.Frequency * Math.Max(boardRaiseWinnings, FoldWinnings);
             }
 
             return (winnings, playBetWins, checkWinnings);
@@ -148,37 +172,42 @@ namespace UltimateTexasHoldemSimulator
 
             Card[] aliveCards = EngineData.GetAllCards().Except(playerCards).ToArray();
 
-            List<int> sortMarkers = new() { 0, 2 };
+            List<int> sortMarkers = new() { 0, 2, 5 };
             Dictionary<string, DistinctFlopHolding> holdingMap = new();
 
-            for (int p1 = 0; p1 < aliveCards.Length; p1++)
+            for (int f1 = 0; f1 < aliveCards.Length; f1++)
             {
-                for (int p2 = p1 + 1; p2 < aliveCards.Length; p2++)
+                for (int f2 = f1 + 1; f2 < aliveCards.Length; f2++)
                 {
-                    Card[] holdingCards = new Card[]
+                    for (int f3 = f2 + 1; f3 < aliveCards.Length; f3++)
                     {
-                        aliveCards[p1],
-                        aliveCards[p2]
-                    };
+                        Card[] cards = new Card[]
+                        {
+                            playerCards[0],
+                            playerCards[1],
+                            aliveCards[f1],
+                            aliveCards[f2],
+                            aliveCards[f3]
+                        };
 
-                    DistinctFlopHolding holding = new(holdingCards, sortMarkers);
+                        DistinctFlopHolding holding = new(cards, sortMarkers);
 
-                    if (holdingMap.ContainsKey(holding.Key))
-                    {
-                        DistinctFlopHolding existingHolding = holdingMap[holding.Key];
-                        existingHolding.Frequency++;
-                    }
-                    else
-                    {
-                        holding.Frequency = 1;
-                        holdingMap.Add(holding.Key, holding);
+                        if (holdingMap.ContainsKey(holding.Key))
+                        {
+                            holdingMap[holding.Key].Frequency++;
+                        }
+                        else
+                        {
+                            holding.Frequency = 1;
+                            holdingMap.Add(holding.Key, holding);
+                        }
                     }
                 }
             }
 
             DistinctFlopHolding[] holdings = holdingMap.Values.ToArray();
 
-            Parallel.For(0, holdings.Length, new ParallelOptions() { MaxDegreeOfParallelism = 1 }, holdingI =>
+            Parallel.For(0, holdings.Length/*, new ParallelOptions() { MaxDegreeOfParallelism = 1 }*/, holdingI =>
             {
                 DistinctFlopHolding holding = holdings[holdingI];
                 Card[] flopCards = new Card[FlopCards];
@@ -199,24 +228,37 @@ namespace UltimateTexasHoldemSimulator
 
                 holding.IsEvaluated = true;
 
-                int flopIterationsDone = holdings.Count(c => c.IsEvaluated);
-
-                if (flopIterationsDone == holdings.Length)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("--- Results ---");
-                }
-                else
-                {
-                    double progressPercent = flopIterationsDone / (double)holdings.Length * 100;
-                    Console.WriteLine($"Progress:\t\t{progressPercent,5:0.00}%");
-                }
-
-                Console.WriteLine($"Winnings check:\t\t{holdings.Sum(c => c.CheckWinnings) / FlopTreeIterations,10:0.0000000} times the ante");
-                Console.WriteLine($"Winnings raise 3:\t{holdings.Sum(c => c.Raise3Winnings) / FlopTreeIterations,10:0.0000000} times the ante");
-                Console.WriteLine($"Winnings raise 4:\t{holdings.Sum(c => c.Raise4Winnings) / FlopTreeIterations,10:0.0000000} times the ante");
-                Console.WriteLine();
+                ReportProgress(holdings);
             });
+
+            ReportProgress(holdings);
+        }
+
+        private static void ReportProgress(DistinctFlopHolding[] holdings)
+        {
+            int flopIterationsDone = holdings.Count(c => c.IsEvaluated);
+            bool isFinished = flopIterationsDone == holdings.Length;
+
+            if (!isFinished && (flopIterationsDone % (holdings.Length / 7)) != 0)
+            {
+                return;
+            }
+
+            if (isFinished)
+            {
+                Console.WriteLine();
+                Console.WriteLine("--- Results ---");
+            }
+            else
+            {
+                double progressPercent = flopIterationsDone / (double)holdings.Length * 100;
+                Console.WriteLine($"Progress:\t\t{progressPercent,5:0.00}% ({flopIterationsDone}/{holdings.Length})");
+            }
+
+            Console.WriteLine($"Winnings check:\t\t{holdings.Sum(c => c.CheckWinnings) / FlopTreeIterations,10:0.0000000} times the ante");
+            Console.WriteLine($"Winnings raise 3:\t{holdings.Sum(c => c.Raise3Winnings) / FlopTreeIterations,10:0.0000000} times the ante");
+            Console.WriteLine($"Winnings raise 4:\t{holdings.Sum(c => c.Raise4Winnings) / FlopTreeIterations,10:0.0000000} times the ante");
+            Console.WriteLine();
         }
 
         private static double GetBlindMuliplier(int hand)
