@@ -8,13 +8,14 @@ namespace UltimateTexasHoldemSimulator
         private const int Ante = 1;
         private const int Blind = Ante;
 
-        const long FlopIterations = 20975724000;
-        const int RiverIterations = 1070190;
-        const int ResultIterations = 990;
+        private const long FlopTreeIterations = FlopIterations * (long)RiverTreeIterations; // 20_975_724_000
+        private const int RiverTreeIterations = RiverIterations * ResultIterations; // 1_070_190
 
-        const int FlopOnly = 19600;
+        private const int FlopIterations = 19600; // 50 choose 3
+        private const int RiverIterations = 1081; // 47 choose 2
+        private const int ResultIterations = 990; // 45 choose 2
 
-        private static void Main(string[] args)
+        private static void Main()
         {
             // Ante 1, Blind 1, Play 0
 
@@ -22,18 +23,18 @@ namespace UltimateTexasHoldemSimulator
 
             // Check, raise 4x or raise 3x
 
-            List<Card> playerCards = new() { Card.Card8c, Card.CardJc };
+            List<Card> playerCards = new() { Card.Card2c, Card.Card3d };
+
+            EvaluatePreflop(playerCards);
 
             //(double winnings3, double winnings4) = OnRaise3or4(playerCards);
 
-            double winnings2 = EvaluateFlop(playerCards);
-            Console.WriteLine(winnings2 / FlopIterations);
-            //Console.WriteLine(winnings3);
-            //Console.WriteLine(winnings4);
+            //Console.WriteLine($"Winnings 3: {winnings3} times the ante.");
+            //Console.WriteLine($"Winnings 4: {winnings4} times the ante.");
         }
 
 
-        private static (double winnings, int playBetWins) EvaluateResult(List<Card> playerCards, Card[] boardCards)
+        private static (double winnings, long playBetWins) EvaluateResult(List<Card> playerCards, Card[] boardCards)
         {
             List<Card> aliveCards = EngineData.GetAllCards().Except(playerCards).Except(boardCards).ToList();
 
@@ -53,7 +54,7 @@ namespace UltimateTexasHoldemSimulator
             }
 
             double winnings = 0;
-            int playBetWins = 0;
+            long playBetWins = 0;
 
             for (int d1 = 0; d1 < aliveCards.Count; d1++)
             {
@@ -98,11 +99,9 @@ namespace UltimateTexasHoldemSimulator
             return (winnings, playBetWins);
         }
 
-        private static (double raiseFlopWinnings, double checkFlopWinnings) EvaluateRiver(List<Card> playerCards, Card[] flopCards)
+        private static (double winnings, long playBetWins, double checkWinnings) EvaluateBoard(List<Card> playerCards, Card[] flopCards)
         {
-            const int TurnRaise = 2 * Ante;
             const int RiverRaise = 1 * Ante;
-
             const int FoldWinnings = -(Ante + Blind) * ResultIterations;
 
             List<Card> aliveCards = EngineData.GetAllCards().Except(playerCards).Except(flopCards).ToList();
@@ -114,8 +113,9 @@ namespace UltimateTexasHoldemSimulator
                 boardCards[i] = flopCards[i];
             }
 
-            double raiseFlopWinnings = 0;
-            double checkFlopWinnings = 0;
+            double winnings = 0;
+            long playBetWins = 0;
+            double checkWinnings = 0;
 
             for (int b4 = 0; b4 < aliveCards.Count; b4++)
             {
@@ -125,29 +125,38 @@ namespace UltimateTexasHoldemSimulator
                 {
                     boardCards[4] = aliveCards[b5];
 
-                    (double winnings, int playBetWins) = EvaluateResult(playerCards, boardCards);
+                    (double resultWinnings, long resultPlayBetWins) = EvaluateResult(playerCards, boardCards);
 
-                    raiseFlopWinnings += winnings + playBetWins * TurnRaise;
+                    winnings += resultWinnings;
+                    playBetWins += resultPlayBetWins;
 
-                    double raiseRiverWinnings = winnings + playBetWins * RiverRaise;
-                    checkFlopWinnings += Math.Max(raiseRiverWinnings, FoldWinnings);
+                    double boardRaiseWinnings = resultWinnings + resultPlayBetWins * RiverRaise;
+                    checkWinnings += Math.Max(boardRaiseWinnings, FoldWinnings);
                 }
             }
 
-            return (raiseFlopWinnings, checkFlopWinnings);
+            return (winnings, playBetWins, checkWinnings);
         }
 
-        private static double EvaluateFlop(List<Card> playerCards)
+        private static void EvaluatePreflop(List<Card> playerCards)
         {
+            const int FlopCards = 3;
+            const int PreflopRaise3 = 3 * Ante;
+            const int PreflopRaise4 = 4 * Ante;
+            const int TurnRaise = 2 * Ante;
+
             List<Card> aliveCards = EngineData.GetAllCards().Except(playerCards).ToList();
 
-            Card[] flopCards = new Card[3];
+            double[] f1WinningsRaise4 = new double[aliveCards.Count];
+            double[] f1WinningsRaise3 = new double[aliveCards.Count];
+            double[] f1WinningsCheck = new double[aliveCards.Count];
+            int[] runCounts = new int[aliveCards.Count];
 
-            double winnings = 0;
-            int count = 0;
+            int f1Iterations = aliveCards.Count - FlopCards + 1;
 
-            for (int f1 = 0; f1 < aliveCards.Count; f1++)
+            Parallel.For(0, f1Iterations/*, new ParallelOptions() { MaxDegreeOfParallelism = 1 }*/, f1 =>
             {
+                Card[] flopCards = new Card[FlopCards];
                 flopCards[0] = aliveCards[f1];
 
                 for (int f2 = f1 + 1; f2 < aliveCards.Count; f2++)
@@ -158,133 +167,37 @@ namespace UltimateTexasHoldemSimulator
                     {
                         flopCards[2] = aliveCards[f3];
 
-                        (double raiseFlopWinnings, double checkFlopWinnings) = EvaluateRiver(playerCards, flopCards);
+                        (double boardWinnings, long boardPlayBetWins, double flopCheckWinnings) = EvaluateBoard(playerCards, flopCards);
 
-                        double flopWinnings;
+                        f1WinningsRaise3[f1] += boardWinnings + boardPlayBetWins * PreflopRaise3;
+                        f1WinningsRaise4[f1] += boardWinnings + boardPlayBetWins * PreflopRaise4;
 
-                        if (raiseFlopWinnings > checkFlopWinnings)
-                        {
-                            flopWinnings = raiseFlopWinnings;
-                        }
-                        else
-                        {
-                            flopWinnings = checkFlopWinnings;
-                        }
+                        double flopRaiseWinnings = boardWinnings + boardPlayBetWins * TurnRaise;
+                        double flopWinnings = Math.Max(flopRaiseWinnings, flopCheckWinnings);
+                        f1WinningsCheck[f1] += flopWinnings;
 
-                        winnings += flopWinnings;
-
-                        count++;
-
-                        if (count % 25 == 0)
-                        {
-                            Console.WriteLine($"Progress: {count / (double)FlopOnly * 100:0.00}%");
-                            Console.WriteLine($"Relative winnings: {winnings / FlopIterations:0.0000000}");
-                            Console.WriteLine();
-                        }
+                        runCounts[f1]++;
                     }
                 }
-            }
 
-            return winnings;
-        }
+                int flopIterationsDone = runCounts.Sum();
 
-        private static (double winnings3, double winnings4) OnRaise3or4(List<Card> playerCards)
-        {
-            const int Play3 = Ante * 3;
-            const int Play4 = Ante * 4;
-
-            List<Card> aliveCards = EngineData.GetAllCards().Except(playerCards).ToList();
-            double[] b1Winnings = new double[aliveCards.Count];
-            double[] b1PlayNet = new double[aliveCards.Count];
-
-            Parallel.For(0, aliveCards.Count, b1 =>
-            {
-                HandValue playerValue = new();
-                Card[] playerCardsToEvaluate = new Card[7];
-
-                playerCardsToEvaluate[5] = playerCards[0];
-                playerCardsToEvaluate[6] = playerCards[1];
-
-                HandValue dealerValue = new();
-                Card[] dealerCardsToEvaluate = new Card[7];
-
-                playerCardsToEvaluate[0] = aliveCards[b1];
-                dealerCardsToEvaluate[0] = aliveCards[b1];
-
-                for (int b2 = b1 + 1; b2 < aliveCards.Count; b2++)
+                if (flopIterationsDone == FlopIterations)
                 {
-                    playerCardsToEvaluate[1] = aliveCards[b2];
-                    dealerCardsToEvaluate[1] = aliveCards[b2];
-
-                    for (int b3 = b2 + 1; b3 < aliveCards.Count; b3++)
-                    {
-                        playerCardsToEvaluate[2] = aliveCards[b3];
-                        dealerCardsToEvaluate[2] = aliveCards[b3];
-
-                        for (int b4 = b3 + 1; b4 < aliveCards.Count; b4++)
-                        {
-                            playerCardsToEvaluate[3] = aliveCards[b4];
-                            dealerCardsToEvaluate[3] = aliveCards[b4];
-
-                            for (int b5 = b4 + 1; b5 < aliveCards.Count; b5++)
-                            {
-                                playerCardsToEvaluate[4] = aliveCards[b5];
-                                dealerCardsToEvaluate[4] = aliveCards[b5];
-
-                                for (int d1 = 0; d1 < aliveCards.Count; d1++)
-                                {
-                                    if (d1 == b1 || d1 == b2 || d1 == b3 || d1 == b4 || d1 == b5) continue;
-                                    dealerCardsToEvaluate[5] = aliveCards[d1];
-
-                                    for (int d2 = d1 + 1; d2 < aliveCards.Count; d2++)
-                                    {
-                                        if (d2 == b1 || d2 == b2 || d2 == b3 || d2 == b4 || d2 == b5) continue;
-                                        dealerCardsToEvaluate[6] = aliveCards[d2];
-
-                                        Engine.SetHandValue(playerCardsToEvaluate, playerValue);
-                                        Engine.SetHandValue(dealerCardsToEvaluate, dealerValue);
-
-                                        int comparison = playerValue.CompareTo(dealerValue);
-
-                                        bool playerWins = comparison > 0;
-                                        bool dealerWins = comparison < 0;
-                                        bool dealerQualified = dealerValue.Hand >= Hand.Pair;
-
-                                        if (playerWins)
-                                        {
-                                            if (dealerQualified)
-                                            {
-                                                b1Winnings[b1] += Ante;
-                                            }
-
-                                            b1PlayNet[b1] += 1;
-                                            b1Winnings[b1] += Blind * GetBlindMuliplier(playerValue.Hand);
-                                        }
-                                        else if (dealerWins)
-                                        {
-                                            if (dealerQualified)
-                                            {
-                                                b1Winnings[b1] -= Ante;
-                                            }
-
-                                            b1PlayNet[b1] -= 1;
-                                            b1Winnings[b1] -= Blind;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Console.WriteLine();
+                    Console.WriteLine("--- Results ---");
                 }
+                else
+                {
+                    double progressPercent = runCounts.Sum() / (double)FlopIterations * 100;
+                    Console.WriteLine($"Progress:\t\t{progressPercent,5:0.00}%");
+                }
+
+                Console.WriteLine($"Winnings check:\t\t{f1WinningsCheck.Sum() / FlopTreeIterations,10:0.0000000} times the ante");
+                Console.WriteLine($"Winnings raise 3:\t{f1WinningsRaise3.Sum() / FlopTreeIterations,10:0.0000000} times the ante");
+                Console.WriteLine($"Winnings raise 4:\t{f1WinningsRaise4.Sum() / FlopTreeIterations,10:0.0000000} times the ante");
+                Console.WriteLine();
             });
-
-            double winnings = b1Winnings.Sum();
-            double playNet = b1PlayNet.Sum();
-
-            double winnings3 = winnings + playNet * Play3;
-            double winnings4 = winnings + playNet * Play4;
-
-            return (winnings3, winnings4);
         }
 
         private static double GetBlindMuliplier(int hand)
