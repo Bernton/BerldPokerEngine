@@ -3,15 +3,17 @@ using BerldPokerEngine;
 
 namespace UltimateTexasHoldemSimulator
 {
-    internal static class Solver
+    public static class Solver
     {
         private const int Ante = 1;
         private const int Blind = Ante;
+        private const int FlopRaise = 2 * Ante;
+        private const int RiverRaise = 1 * Ante;
+        private const int FoldWinnings = -(Ante + Blind) * ResultIterations;
 
         private const long FlopTreeIterations = FlopIterations * (long)RiverTreeIterations; // 20_975_724_000
         private const int RiverTreeIterations = RiverIterations * ResultIterations; // 1_070_190
 
-        private const int PreflopIterations = 1326; // 52 choose 2
         private const int FlopIterations = 19600; // 50 choose 3
         private const int RiverIterations = 1081; // 47 choose 2
         private const int ResultIterations = 990; // 45 choose 2
@@ -47,7 +49,7 @@ namespace UltimateTexasHoldemSimulator
                 }
             }
 
-            DistinctHolding[] holdings = holdingMap.Values.OrderByDescending(c => GetFormatHoleCards(c.Cards)).ToArray();
+            DistinctHolding[] holdings = holdingMap.Values.OrderByDescending(c => ComputedPreflops.GetFormatHoleCards(c.Cards)).ToArray();
 
             foreach (DistinctHolding holding in holdings)
             {
@@ -61,12 +63,20 @@ namespace UltimateTexasHoldemSimulator
             }
         }
 
+        public static (double raiseValue4, double raiseValue3, double checkValue) EvaluatePreflopValues(IEnumerable<Card> playerCards)
+        {
+            (double raise4Winnings, double raise3Winnings, double checkWinnings) = ComputedPreflops.Get(playerCards);
+            double raiseValue4 = raise4Winnings / FlopTreeIterations;
+            double raiseValue3 = raise3Winnings / FlopTreeIterations;
+            double checkValue = checkWinnings / FlopTreeIterations;
+            return (raiseValue4, raiseValue3, checkValue);
+        }
+
         private static void EvaluatePreflop(List<Card> playerCards)
         {
             const int FlopCards = 3;
             const int PreflopRaise3 = 3 * Ante;
             const int PreflopRaise4 = 4 * Ante;
-            const int TurnRaise = 2 * Ante;
 
             Card[] aliveCards = EngineData.GetAllCards().Except(playerCards).ToArray();
 
@@ -117,8 +127,8 @@ namespace UltimateTexasHoldemSimulator
 
                 (double boardWinnings, long boardPlayBetWins, double checkFlopWinnings) = EvaluateBoard(playerCards, flopCards);
 
-                double flopRaiseWinnings = boardWinnings + boardPlayBetWins * TurnRaise;
-                double checkPreflopWinnings = Math.Max(flopRaiseWinnings, checkFlopWinnings);
+                double raiseFlopWinnings = boardWinnings + boardPlayBetWins * FlopRaise;
+                double checkPreflopWinnings = Math.Max(raiseFlopWinnings, checkFlopWinnings);
                 holding.CheckWinnings += holding.Frequency * checkPreflopWinnings;
 
                 holding.Raise3Winnings += holding.Frequency * (boardWinnings + boardPlayBetWins * PreflopRaise3);
@@ -134,13 +144,20 @@ namespace UltimateTexasHoldemSimulator
             double checkWinnings = holdings.Sum(c => c.CheckWinnings);
             double raise3Winnings = holdings.Sum(c => c.Raise3Winnings);
             double raise4Winnings = holdings.Sum(c => c.Raise4Winnings);
-            Console.WriteLine($"{GetFormatHoleCards(playerCards)},{checkWinnings},{raise3Winnings},{raise4Winnings}");
+            Console.WriteLine($"{ComputedPreflops.GetFormatHoleCards(playerCards)},{checkWinnings},{raise3Winnings},{raise4Winnings}");
+        }
+
+        public static (double raiseValue, double checkValue) EvaluateFlopValues(IEnumerable<Card> playerCards, IEnumerable<Card> flopCards)
+        {
+            (double boardWinnings, long boardPlayBetWins, double checkFlopWinnings) = EvaluateBoard(playerCards.ToList(), flopCards.ToArray());
+            double raiseFlopWinnings = boardWinnings + boardPlayBetWins * FlopRaise;
+            double raiseValue = raiseFlopWinnings / RiverTreeIterations;
+            double checkValue = checkFlopWinnings / RiverTreeIterations;
+            return (raiseValue, checkValue);
         }
 
         private static (double winnings, long playBetWins, double checkWinnings) EvaluateBoard(List<Card> playerCards, Card[] flopCards)
         {
-            const int RiverRaise = 1 * Ante;
-            const int FoldWinnings = -(Ante + Blind) * ResultIterations;
 
             Card[] aliveCards = EngineData.GetAllCards().Except(playerCards).Except(flopCards).ToArray();
 
@@ -203,6 +220,15 @@ namespace UltimateTexasHoldemSimulator
             }
 
             return (winnings, playBetWins, checkWinnings);
+        }
+
+        public static (double raiseValue, double foldValue) EvaluateRiverValues(IEnumerable<Card> playerCards, IEnumerable<Card> boardCards)
+        {
+            (double resultWinnings, long resultPlayBetWins) = EvaluateResult(playerCards.ToList(), boardCards.ToArray());
+            double raiseFlopWinnings = resultWinnings + resultPlayBetWins * RiverRaise;
+            double raiseValue = raiseFlopWinnings / ResultIterations;
+            double foldValue = FoldWinnings / ResultIterations;
+            return (raiseValue, foldValue);
         }
 
         private static (double winnings, long playBetWins) EvaluateResult(List<Card> playerCards, Card[] boardCards)
@@ -268,30 +294,6 @@ namespace UltimateTexasHoldemSimulator
             }
 
             return (winnings, playBetWins);
-        }
-
-        private static string GetFormatHoleCards(IEnumerable<Card> cardsToFormat)
-        {
-            Card[] cards = cardsToFormat.OrderByDescending(c => c).ToArray();
-
-            Card p1 = cards[0];
-            Card p2 = cards[1];
-
-            string suffix = string.Empty;
-
-            if (p1.Rank != p2.Rank)
-            {
-                if (p1.Suit == p2.Suit)
-                {
-                    suffix = "s";
-                }
-                else
-                {
-                    suffix = "o";
-                }
-            }
-
-            return $"{Rank.ToChar(p1.Rank)}{Rank.ToChar(p2.Rank)}{suffix}";
         }
 
         private static double GetBlindMuliplier(int hand)
