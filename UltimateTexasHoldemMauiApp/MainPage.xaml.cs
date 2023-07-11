@@ -12,8 +12,12 @@ namespace UltimateTexasHoldemMauiApp
         public MainPage()
         {
             InitializeComponent();
-            labelOutput.Text = StartText;
+        }
+
+        private void OnContentPageLoaded(object sender, EventArgs e)
+        {
             entryInput.IsTextPredictionEnabled = false;
+            labelOutput.Text = StartText;
         }
 
         private void OnCardsTextChanged(object sender, TextChangedEventArgs e)
@@ -23,7 +27,7 @@ namespace UltimateTexasHoldemMauiApp
 
             if (input.Length % 2 != 0)
             {
-                labelOutput.Text = "Odd amount of characters.";
+                labelOutput.Text = "Character amount not valid.";
                 return;
             }
 
@@ -42,7 +46,7 @@ namespace UltimateTexasHoldemMauiApp
 
             if (!isPreflop && !isFlop && !isRiver)
             {
-                labelOutput.Text = "Card amount not valid.";
+                labelOutput.Text = "Character amount not valid.";
                 return;
             }
 
@@ -117,7 +121,7 @@ namespace UltimateTexasHoldemMauiApp
                 }
 
                 evOutput.AppendLine($"Raise 1x EV:\t{raiseValue,7:0.0000}");
-                evOutput.AppendLine($"Fold EV:\t{foldValue,7:0.0000}");
+                evOutput.AppendLine($"Fold EV:\t\t{foldValue,7:0.0000}");
             }
 
             labelOutput.Text = $"Action:\t\t{decisionOutput}\n\n{evOutput}";

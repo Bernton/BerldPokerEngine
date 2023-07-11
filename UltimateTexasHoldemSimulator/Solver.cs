@@ -158,7 +158,6 @@ namespace UltimateTexasHoldemSimulator
 
         private static (double winnings, long playBetWins, double checkWinnings) EvaluateBoard(List<Card> playerCards, Card[] flopCards)
         {
-
             Card[] aliveCards = EngineData.GetAllCards().Except(playerCards).Except(flopCards).ToArray();
 
             List<int> sortMarkers = new() { 0, 2, 5, 7 };
@@ -199,18 +198,24 @@ namespace UltimateTexasHoldemSimulator
             long playBetWins = 0;
             double checkWinnings = 0;
 
-            Card[] boardCards = new Card[5];
+            Card[] holdingPlayerCards = new Card[playerCards.Count];
+            Card[] holdingBoardCards = new Card[5];
 
             for (int i = 0; i < holdings.Length; i++)
             {
                 DistinctHolding holding = holdings[i];
 
-                for (int cardI = 0; cardI < 5; cardI++)
+                for (int cardI = 0; cardI < playerCards.Count; cardI++)
                 {
-                    boardCards[cardI] = holding.Cards[playerCards.Count + cardI];
+                    holdingPlayerCards[cardI] = holding.Cards[cardI];
                 }
 
-                (double resultWinnings, long resultPlayBetWins) = EvaluateResult(playerCards, boardCards);
+                for (int cardI = 0; cardI < 5; cardI++)
+                {
+                    holdingBoardCards[cardI] = holding.Cards[playerCards.Count + cardI];
+                }
+
+                (double resultWinnings, long resultPlayBetWins) = EvaluateResult(holdingPlayerCards, holdingBoardCards);
 
                 winnings += holding.Frequency * resultWinnings;
                 playBetWins += holding.Frequency * resultPlayBetWins;
@@ -224,14 +229,14 @@ namespace UltimateTexasHoldemSimulator
 
         public static (double raiseValue, double foldValue) EvaluateRiverValues(IEnumerable<Card> playerCards, IEnumerable<Card> boardCards)
         {
-            (double resultWinnings, long resultPlayBetWins) = EvaluateResult(playerCards.ToList(), boardCards.ToArray());
+            (double resultWinnings, long resultPlayBetWins) = EvaluateResult(playerCards.ToArray(), boardCards.ToArray());
             double raiseFlopWinnings = resultWinnings + resultPlayBetWins * RiverRaise;
             double raiseValue = raiseFlopWinnings / ResultIterations;
             double foldValue = FoldWinnings / ResultIterations;
             return (raiseValue, foldValue);
         }
 
-        private static (double winnings, long playBetWins) EvaluateResult(List<Card> playerCards, Card[] boardCards)
+        private static (double winnings, long playBetWins) EvaluateResult(Card[] playerCards, Card[] boardCards)
         {
             List<Card> aliveCards = EngineData.GetAllCards().Except(playerCards).Except(boardCards).ToList();
 
