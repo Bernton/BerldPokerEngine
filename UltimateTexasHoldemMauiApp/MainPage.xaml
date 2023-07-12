@@ -13,19 +13,19 @@
             <Label
                 Text="Ultimate Texas Hold'em Solver"
                 SemanticProperties.HeadingLevel="Level1"
-                FontSize="32"
+                FontSize="42"
                 HorizontalOptions="Center" />
 
             <Entry 
                 x:Name="entryInput"
-                FontSize="16"
+                FontSize="32"
                 TextChanged="OnCardsTextChanged"
                 Placeholder="Enter cards here"
                 />
 
             <Label
                 x:Name="labelOutput"
-                FontSize="16"
+                FontSize="32"
                 Text=""
                 />
 

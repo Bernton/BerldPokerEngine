@@ -7,7 +7,7 @@ namespace UltimateTexasHoldemMauiApp
 {
     public partial class MainPage : ContentPage
     {
-        private static readonly string StartText = "Start EV:\t-0.0218";
+        private static readonly string StartText = "Start EV:\t\t-0.0218";
 
         public MainPage()
         {
@@ -87,9 +87,9 @@ namespace UltimateTexasHoldemMauiApp
                     decisionOutput.Append("Check");
                 }
 
-                evOutput.AppendLine($"Raise 4x EV:\t{raise4Value,7:0.0000}");
-                evOutput.AppendLine($"Raise 3x EV:\t{raise3Value,7:0.0000}");
-                evOutput.AppendLine($"Check EV:\t{checkValue,7:0.0000}");
+                evOutput.AppendLine($"Raise 4x EV:\t\t{raise4Value,7:0.0000}");
+                evOutput.AppendLine($"Raise 3x EV:\t\t{raise3Value,7:0.0000}");
+                evOutput.AppendLine($"Check EV:\t\t{checkValue,7:0.0000}");
             }
             else if (isFlop)
             {
@@ -104,8 +104,8 @@ namespace UltimateTexasHoldemMauiApp
                     decisionOutput.Append("Check");
                 }
 
-                evOutput.AppendLine($"Raise 2x EV:\t{raiseValue,7:0.0000}");
-                evOutput.AppendLine($"Check EV:\t{checkValue,7:0.0000}");
+                evOutput.AppendLine($"Raise 2x EV:\t\t{raiseValue,7:0.0000}");
+                evOutput.AppendLine($"Check EV:\t\t{checkValue,7:0.0000}");
             }
             else if (isRiver)
             {
