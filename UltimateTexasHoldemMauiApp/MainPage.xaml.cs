@@ -120,11 +120,11 @@ namespace UltimateTexasHoldemMauiApp
                     decisionOutput.Append("Fold");
                 }
 
-                evOutput.AppendLine($"Raise 1x EV:\t{raiseValue,7:0.0000}");
-                evOutput.AppendLine($"Fold EV:\t\t{foldValue,7:0.0000}");
+                evOutput.AppendLine($"Raise 1x EV:\t\t{raiseValue,7:0.0000}");
+                evOutput.AppendLine($"Fold EV:\t\t\t{foldValue,7:0.0000}");
             }
 
-            labelOutput.Text = $"Action:\t\t{decisionOutput}\n\n{evOutput}";
+            labelOutput.Text = $"Action:\t\t\t{decisionOutput}\n\n{evOutput}";
         }
 
         private static List<Card> InputToCards(string input)
